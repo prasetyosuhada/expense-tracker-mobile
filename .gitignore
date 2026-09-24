@@ -1,0 +1,34 @@
+# Dart and Flutter generated files
+.dart_tool/
+.packages
+.pub/
+.flutter-plugins
+.flutter-plugins-dependencies
+/build/
+/coverage/
+
+# Android and Gradle local files
+.gradle/
+/android/local.properties
+/android/captures/
+
+# Release signing credentials and generated packages
+/android/key.properties
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.apk
+*.aab
+*.apks
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+
+# Local editor and operating system files
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
