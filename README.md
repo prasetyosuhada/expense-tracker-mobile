@@ -2,7 +2,7 @@
 
 Expense Tracker adalah aplikasi Android untuk mencatat pengeluaran pribadi. MVP V0.1 dirancang agar pengguna dapat mencatat transaksi dengan cepat dan melihat total pengeluaran bulan berjalan.
 
-> **Status proyek:** masih dalam tahap perencanaan. Repository ini berisi spesifikasi; aplikasi Flutter dan APK belum tersedia.
+> **Status proyek:** kerangka aplikasi Flutter Android sudah dibuat. Layar awal masih kosong; fitur MVP dan APK release belum tersedia.
 
 ## Fitur MVP yang direncanakan
 
@@ -12,14 +12,15 @@ Expense Tracker adalah aplikasi Android untuk mencatat pengeluaran pribadi. MVP 
 - Mengedit dan menghapus transaksi dengan konfirmasi penghapusan.
 - Menggunakan semua fitur utama tanpa koneksi internet.
 
-Data disimpan secara lokal di perangkat menggunakan SQLite. MVP ini tidak memerlukan akun, backend, atau sinkronisasi antarperangkat. Menghapus aplikasi atau data aplikasi dapat menghilangkan riwayat yang tersimpan.
+Data akan disimpan secara lokal di perangkat menggunakan SQLite. MVP ini dirancang tanpa akun, backend, atau sinkronisasi antarperangkat. Setelah aplikasi tersedia, menghapus aplikasi atau data aplikasi dapat menghilangkan riwayat yang tersimpan.
 
 ## Teknologi dan target
 
 | Komponen | Rencana |
 | --- | --- |
 | Aplikasi | Flutter dan Dart |
-| Platform | Android, minimum API 24 |
+| SDK pengembangan | Flutter 3.47.3 stable, Dart 3.13.3 |
+| Platform | Android, minimum API 24; target dan compile API 36 |
 | Penyimpanan | SQLite lokal melalui `sqflite` |
 | Bahasa dan mata uang | Bahasa Indonesia, IDR |
 | Distribusi MVP | APK langsung |
@@ -33,4 +34,6 @@ Data disimpan secara lokal di perangkat menggunakan SQLite. MVP ini tidak memerl
 - [Test Plan](docs/05-TEST-PLAN.md) — skenario pengujian dan kriteria kelulusan.
 - [Coding Conventions](docs/06-CODING-CONVENTIONS.md) — aturan penulisan kode.
 
-Petunjuk instalasi, menjalankan aplikasi, dan membangun APK akan ditambahkan setelah proyek Flutter diinisialisasi.
+## Menjalankan kerangka aplikasi
+
+Siapkan Flutter 3.47.3, Android SDK, serta emulator atau perangkat Android. Dari root proyek, jalankan `flutter pub get` lalu `flutter run`. Aplikasi saat ini menampilkan layar kosong. Petunjuk build APK release akan ditambahkan setelah konfigurasi release selesai.
