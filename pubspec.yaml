@@ -17,3 +17,16 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  fonts:
+    - family: Geist
+      fonts:
+        - asset: assets/fonts/geist/Geist-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/geist/Geist-Black.ttf
+          weight: 900
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/inter/Inter-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/inter/Inter-SemiBold.ttf
+          weight: 600
