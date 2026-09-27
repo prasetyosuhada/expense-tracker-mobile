@@ -99,6 +99,48 @@ abstract class AppLocalizations {
   /// In id, this message translates to:
   /// **'Expense Tracker'**
   String get appTitle;
+
+  /// No description provided for @formAmountRequired.
+  ///
+  /// In id, this message translates to:
+  /// **'Nominal wajib diisi'**
+  String get formAmountRequired;
+
+  /// No description provided for @formAmountZero.
+  ///
+  /// In id, this message translates to:
+  /// **'Nominal harus lebih besar dari 0'**
+  String get formAmountZero;
+
+  /// No description provided for @formAmountInvalid.
+  ///
+  /// In id, this message translates to:
+  /// **'Nominal tidak valid'**
+  String get formAmountInvalid;
+
+  /// No description provided for @formAmountTooLarge.
+  ///
+  /// In id, this message translates to:
+  /// **'Nominal terlalu besar'**
+  String get formAmountTooLarge;
+
+  /// No description provided for @formCategoryRequired.
+  ///
+  /// In id, this message translates to:
+  /// **'Kategori wajib dipilih'**
+  String get formCategoryRequired;
+
+  /// No description provided for @formDateRequired.
+  ///
+  /// In id, this message translates to:
+  /// **'Tanggal wajib dipilih'**
+  String get formDateRequired;
+
+  /// No description provided for @formNoteTooLong.
+  ///
+  /// In id, this message translates to:
+  /// **'Catatan maksimal 100 karakter'**
+  String get formNoteTooLong;
 }
 
 class _AppLocalizationsDelegate

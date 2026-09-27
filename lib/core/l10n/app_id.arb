@@ -1,4 +1,11 @@
 {
   "@@locale": "id",
-  "appTitle": "Expense Tracker"
+  "appTitle": "Expense Tracker",
+  "formAmountRequired": "Nominal wajib diisi",
+  "formAmountZero": "Nominal harus lebih besar dari 0",
+  "formAmountInvalid": "Nominal tidak valid",
+  "formAmountTooLarge": "Nominal terlalu besar",
+  "formCategoryRequired": "Kategori wajib dipilih",
+  "formDateRequired": "Tanggal wajib dipilih",
+  "formNoteTooLong": "Catatan maksimal 100 karakter"
 }
