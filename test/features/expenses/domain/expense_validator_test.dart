@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:expensetracker/core/errors/validation_failure.dart';
+import 'package:expensetracker/core/errors/app_failure.dart';
 import 'package:expensetracker/features/expenses/domain/expense_category.dart';
 import 'package:expensetracker/features/expenses/domain/expense_date.dart';
 import 'package:expensetracker/features/expenses/domain/expense_draft.dart';
