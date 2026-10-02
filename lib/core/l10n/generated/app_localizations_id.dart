@@ -13,6 +13,21 @@ class AppLocalizationsId extends AppLocalizations {
   String get appTitle => 'Expense Tracker';
 
   @override
+  String get navigationHome => 'Beranda';
+
+  @override
+  String get navigationTransactions => 'Transaksi';
+
+  @override
+  String get addExpenseAction => 'Tambah';
+
+  @override
+  String get addExpenseTitle => 'Tambah Pengeluaran';
+
+  @override
+  String get addExpenseSemanticLabel => 'Tambah pengeluaran';
+
+  @override
   String get formAmountRequired => 'Nominal wajib diisi';
 
   @override

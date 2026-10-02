@@ -1,6 +1,11 @@
 {
   "@@locale": "id",
   "appTitle": "Expense Tracker",
+  "navigationHome": "Beranda",
+  "navigationTransactions": "Transaksi",
+  "addExpenseAction": "Tambah",
+  "addExpenseTitle": "Tambah Pengeluaran",
+  "addExpenseSemanticLabel": "Tambah pengeluaran",
   "formAmountRequired": "Nominal wajib diisi",
   "formAmountZero": "Nominal harus lebih besar dari 0",
   "formAmountInvalid": "Nominal tidak valid",

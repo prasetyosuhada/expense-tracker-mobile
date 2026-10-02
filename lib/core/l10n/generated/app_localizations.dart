@@ -100,6 +100,36 @@ abstract class AppLocalizations {
   /// **'Expense Tracker'**
   String get appTitle;
 
+  /// No description provided for @navigationHome.
+  ///
+  /// In id, this message translates to:
+  /// **'Beranda'**
+  String get navigationHome;
+
+  /// No description provided for @navigationTransactions.
+  ///
+  /// In id, this message translates to:
+  /// **'Transaksi'**
+  String get navigationTransactions;
+
+  /// No description provided for @addExpenseAction.
+  ///
+  /// In id, this message translates to:
+  /// **'Tambah'**
+  String get addExpenseAction;
+
+  /// No description provided for @addExpenseTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Tambah Pengeluaran'**
+  String get addExpenseTitle;
+
+  /// No description provided for @addExpenseSemanticLabel.
+  ///
+  /// In id, this message translates to:
+  /// **'Tambah pengeluaran'**
+  String get addExpenseSemanticLabel;
+
   /// No description provided for @formAmountRequired.
   ///
   /// In id, this message translates to:

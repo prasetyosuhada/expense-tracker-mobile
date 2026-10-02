@@ -4,7 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:sqflite/sqflite.dart';
 
+import 'package:expensetracker/app/app.dart';
 import 'package:expensetracker/app/app_bootstrap.dart';
+import 'package:expensetracker/app/app_shell.dart';
 import 'package:expensetracker/core/clock/system_clock.dart';
 import 'package:expensetracker/core/errors/app_failure.dart';
 import 'package:expensetracker/core/l10n/generated/app_localizations.dart';
@@ -55,23 +57,26 @@ void main() {
     },
   );
 
-  testWidgets('main launches before storage access and defers open failures', (
+  testWidgets('main mounts the shell and contains storage open failures', (
     tester,
   ) async {
     app.main();
     await tester.pumpAndSettle();
-    final root = tester.widget<app.MainApp>(find.byType(app.MainApp));
+    final root = tester.widget<MainApp>(find.byType(MainApp));
     final repository = root.repository as SqliteExpenseRepository;
     addTearDown(repository.dispose);
 
     expect(root.clock, isA<SystemClock>());
     expect(find.byType(MaterialApp), findsOneWidget);
-    expect(storageCalls, isEmpty);
+    expect(find.byType(AppShell), findsOneWidget);
+    expect(storageCalls, isNotEmpty);
     expect(tester.takeException(), isNull);
 
-    // Only a read after launch reaches the unavailable platform plugin.
+    // Shell reads are contained by the view models; later reads still fail
+    // with the repository's typed failure rather than a plugin exception.
     await expectLater(repository.getAll(), throwsA(isA<StorageFailure>()));
     expect(storageCalls, isNotEmpty);
+    await tester.pumpWidget(const SizedBox.shrink());
   });
 
   testWidgets(
@@ -81,12 +86,10 @@ void main() {
       final repository = FakeExpenseRepository(clock: clock);
       addTearDown(repository.dispose);
 
-      await tester.pumpWidget(
-        app.MainApp(clock: clock, repository: repository),
-      );
+      await tester.pumpWidget(MainApp(clock: clock, repository: repository));
       await tester.pumpAndSettle();
-      final root = tester.widget<app.MainApp>(find.byType(app.MainApp));
-      final context = tester.element(find.byType(Scaffold));
+      final root = tester.widget<MainApp>(find.byType(MainApp));
+      final context = tester.element(find.byType(AppShell));
 
       expect(root.clock, same(clock));
       expect(root.repository, same(repository));
@@ -94,6 +97,7 @@ void main() {
       expect(AppLocalizations.of(context), isNotNull);
       expect(storageCalls, isEmpty);
       expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
     },
   );
 }
