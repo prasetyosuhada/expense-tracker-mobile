@@ -8,6 +8,7 @@ import 'package:expensetracker/core/theme/app_shapes.dart';
 import 'package:expensetracker/features/expenses/domain/expense_repository.dart';
 import 'package:expensetracker/features/expenses/presentation/expense_form/expense_form_state.dart';
 import 'package:expensetracker/features/expenses/presentation/expense_form/expense_form_view_model.dart';
+import 'package:expensetracker/features/expenses/presentation/home/home_screen.dart';
 import 'package:expensetracker/features/expenses/presentation/home/home_view_model.dart';
 import 'package:expensetracker/features/expenses/presentation/transactions/transactions_view_model.dart';
 
@@ -38,8 +39,7 @@ class AppShell extends StatefulWidget {
   final AppClock clock;
   final ExpenseRepository repository;
 
-  // Screen contents are supplied as their P3 tasks land. Builders also let
-  // navigation tests exercise scroll and lifecycle without implementing them.
+  // Builders allow isolated navigation tests and incremental screen integration.
   final HomeDestinationBuilder? homeBuilder;
   final TransactionsDestinationBuilder? transactionsBuilder;
   final AddExpenseBuilder? addExpenseBuilder;
@@ -141,7 +141,12 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
             index: _selectedIndex,
             children: [
               widget.homeBuilder?.call(context, _homeViewModel) ??
-                  _DestinationFrame(title: l10n.appTitle),
+                  HomeScreen(
+                    viewModel: _homeViewModel,
+                    onViewAll: () => _selectDestination(1),
+                    onAddExpense: _openAddExpense,
+                    isActive: _selectedIndex == 0,
+                  ),
               widget.transactionsBuilder?.call(
                     context,
                     _transactionsViewModel,
@@ -231,7 +236,7 @@ class _AddExpenseRouteState extends State<_AddExpenseRoute> {
   }
 }
 
-// P3-003/P3-008 and P3-005 onward supply the actual screen contents.
+// Remaining P3 tasks supply the Transactions and form screen contents.
 class _DestinationFrame extends StatelessWidget {
   const _DestinationFrame({required this.title});
 

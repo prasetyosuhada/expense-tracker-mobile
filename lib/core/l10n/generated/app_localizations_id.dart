@@ -28,6 +28,54 @@ class AppLocalizationsId extends AppLocalizations {
   String get addExpenseSemanticLabel => 'Tambah pengeluaran';
 
   @override
+  String get homeTitle => 'Pengeluaran';
+
+  @override
+  String get homeTotalLabel => 'Total pengeluaran';
+
+  @override
+  String get homeRecentTransactions => 'Transaksi terbaru';
+
+  @override
+  String get homeViewAll => 'Lihat semua';
+
+  @override
+  String get homeEmptyTitle => 'Belum ada pengeluaran';
+
+  @override
+  String get homeEmptyDescription =>
+      'Tambahkan pengeluaran pertamamu untuk mulai mencatat.';
+
+  @override
+  String get readErrorTitle => 'Data tidak dapat dimuat';
+
+  @override
+  String get readErrorDescription =>
+      'Terjadi masalah saat membuka data pengeluaran.';
+
+  @override
+  String get retryAction => 'Coba Lagi';
+
+  @override
+  String get homeRefreshFailure =>
+      'Data pengeluaran gagal diperbarui. Coba lagi.';
+
+  @override
+  String get categoryFood => 'Makanan';
+
+  @override
+  String get categoryTransportation => 'Transportasi';
+
+  @override
+  String get categoryShopping => 'Belanja';
+
+  @override
+  String get categoryBills => 'Tagihan';
+
+  @override
+  String get categoryOther => 'Lainnya';
+
+  @override
   String get formAmountRequired => 'Nominal wajib diisi';
 
   @override

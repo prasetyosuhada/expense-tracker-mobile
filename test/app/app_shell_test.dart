@@ -52,7 +52,7 @@ void main() {
     expect(theme.useMaterial3, isTrue);
     expect(theme.colorScheme.primary, AppColors.primary);
     expect(theme.extension<CategoryColors>(), CategoryColors.light);
-    expect(find.text('Expense Tracker'), findsOneWidget);
+    expect(find.text('Pengeluaran'), findsOneWidget);
     expect(find.byType(FloatingActionButton), findsOneWidget);
     expect(find.byType(BackButton), findsNothing);
 
@@ -122,7 +122,7 @@ void main() {
 
     expect(_selectedIndex(tester), 0);
     expect(platformCalls, isNot(contains('SystemNavigator.pop')));
-    expect(find.text('Expense Tracker'), findsOneWidget);
+    expect(find.text('Pengeluaran'), findsOneWidget);
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
@@ -205,7 +205,13 @@ void main() {
         expect(data.label, 'Tambah pengeluaran');
         expect(data.flagsCollection.isButton, isTrue);
         expect(data.hasAction(SemanticsAction.tap), isTrue);
-        expect(find.text('Tambah'), findsOneWidget);
+        expect(
+          find.descendant(
+            of: find.byType(FloatingActionButton),
+            matching: find.text('Tambah'),
+          ),
+          findsOneWidget,
+        );
       } finally {
         semantics.dispose();
         await tester.pumpWidget(const SizedBox.shrink());

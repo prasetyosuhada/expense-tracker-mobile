@@ -130,6 +130,96 @@ abstract class AppLocalizations {
   /// **'Tambah pengeluaran'**
   String get addExpenseSemanticLabel;
 
+  /// No description provided for @homeTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Pengeluaran'**
+  String get homeTitle;
+
+  /// No description provided for @homeTotalLabel.
+  ///
+  /// In id, this message translates to:
+  /// **'Total pengeluaran'**
+  String get homeTotalLabel;
+
+  /// No description provided for @homeRecentTransactions.
+  ///
+  /// In id, this message translates to:
+  /// **'Transaksi terbaru'**
+  String get homeRecentTransactions;
+
+  /// No description provided for @homeViewAll.
+  ///
+  /// In id, this message translates to:
+  /// **'Lihat semua'**
+  String get homeViewAll;
+
+  /// No description provided for @homeEmptyTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Belum ada pengeluaran'**
+  String get homeEmptyTitle;
+
+  /// No description provided for @homeEmptyDescription.
+  ///
+  /// In id, this message translates to:
+  /// **'Tambahkan pengeluaran pertamamu untuk mulai mencatat.'**
+  String get homeEmptyDescription;
+
+  /// No description provided for @readErrorTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Data tidak dapat dimuat'**
+  String get readErrorTitle;
+
+  /// No description provided for @readErrorDescription.
+  ///
+  /// In id, this message translates to:
+  /// **'Terjadi masalah saat membuka data pengeluaran.'**
+  String get readErrorDescription;
+
+  /// No description provided for @retryAction.
+  ///
+  /// In id, this message translates to:
+  /// **'Coba Lagi'**
+  String get retryAction;
+
+  /// No description provided for @homeRefreshFailure.
+  ///
+  /// In id, this message translates to:
+  /// **'Data pengeluaran gagal diperbarui. Coba lagi.'**
+  String get homeRefreshFailure;
+
+  /// No description provided for @categoryFood.
+  ///
+  /// In id, this message translates to:
+  /// **'Makanan'**
+  String get categoryFood;
+
+  /// No description provided for @categoryTransportation.
+  ///
+  /// In id, this message translates to:
+  /// **'Transportasi'**
+  String get categoryTransportation;
+
+  /// No description provided for @categoryShopping.
+  ///
+  /// In id, this message translates to:
+  /// **'Belanja'**
+  String get categoryShopping;
+
+  /// No description provided for @categoryBills.
+  ///
+  /// In id, this message translates to:
+  /// **'Tagihan'**
+  String get categoryBills;
+
+  /// No description provided for @categoryOther.
+  ///
+  /// In id, this message translates to:
+  /// **'Lainnya'**
+  String get categoryOther;
+
   /// No description provided for @formAmountRequired.
   ///
   /// In id, this message translates to:
