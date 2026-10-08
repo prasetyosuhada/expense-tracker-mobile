@@ -3,6 +3,7 @@ import 'dart:math' show min;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'package:expensetracker/core/formatting/id_date_formatter.dart';
 import 'package:expensetracker/core/l10n/generated/app_localizations.dart';
 import 'package:expensetracker/core/theme/app_colors.dart';
 import 'package:expensetracker/core/theme/app_shapes.dart';
@@ -10,6 +11,8 @@ import 'package:expensetracker/core/theme/app_spacing.dart';
 import 'package:expensetracker/core/theme/app_typography.dart';
 import 'package:expensetracker/core/theme/category_colors.dart';
 import 'package:expensetracker/features/expenses/domain/expense_category.dart';
+import 'package:expensetracker/features/expenses/domain/expense_date.dart';
+import 'package:expensetracker/features/expenses/domain/expense_validator.dart';
 import 'package:expensetracker/features/expenses/presentation/expense_form/expense_form_view_model.dart';
 import 'package:expensetracker/features/expenses/presentation/widgets/expense_list_item.dart';
 
@@ -85,10 +88,40 @@ class ThousandsSeparatorInputFormatter extends TextInputFormatter {
   bool _isDigit(String ch) => ch.codeUnitAt(0) >= 48 && ch.codeUnitAt(0) <= 57;
 }
 
+/// Enforces a maximum character length measured in user-perceived grapheme
+/// clusters using [Characters] rather than UTF-16 code units.
+class GraphemeLengthLimitingTextInputFormatter extends TextInputFormatter {
+  const GraphemeLengthLimitingTextInputFormatter(this.maxGraphemes);
+
+  final int maxGraphemes;
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    if (maxGraphemes <= 0) {
+      return const TextEditingValue();
+    }
+
+    final newCharacters = newValue.text.characters;
+    if (newCharacters.length <= maxGraphemes) {
+      return newValue;
+    }
+
+    final truncated = newCharacters.take(maxGraphemes).string;
+    final newOffset = min(newValue.selection.end, truncated.length);
+
+    return TextEditingValue(
+      text: truncated,
+      selection: TextSelection.collapsed(offset: newOffset),
+    );
+  }
+}
+
 /// The add/edit expense form screen, built incrementally across P3-005 to
-/// P3-008. This version (P3-006) wires up Amount and Category fields;
-/// date, note, and the submit button are stubbed and will be completed by the
-/// subsequent tasks.
+/// P3-008. This version (P3-007) wires up Amount, Category, Date, and Note fields;
+/// the submit button is stubbed and will be completed by P3-008.
 class ExpenseFormScreen extends StatefulWidget {
   const ExpenseFormScreen({super.key, required this.viewModel});
 
@@ -100,7 +133,9 @@ class ExpenseFormScreen extends StatefulWidget {
 
 class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
   late final TextEditingController _amountController;
+  late final TextEditingController _noteController;
   final FocusNode _amountFocus = FocusNode();
+  final IdDateFormatter _dateFormatter = IdDateFormatter();
 
   @override
   void initState() {
@@ -109,6 +144,9 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     final initialRaw = widget.viewModel.state.amountText;
     final initialFormatted = _formatRaw(initialRaw);
     _amountController = TextEditingController(text: initialFormatted);
+    _noteController = TextEditingController(
+      text: widget.viewModel.state.noteText,
+    );
     // In add mode, open the keyboard immediately (UX §8.2).
     if (!widget.viewModel.isEditing) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -120,6 +158,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
   @override
   void dispose() {
     _amountController.dispose();
+    _noteController.dispose();
     _amountFocus.dispose();
     super.dispose();
   }
@@ -148,6 +187,10 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     widget.viewModel.updateAmount(raw);
   }
 
+  void _onNoteChanged(String text) {
+    widget.viewModel.updateNote(text);
+  }
+
   Future<void> _pickCategory(BuildContext context) async {
     FocusScope.of(context).unfocus();
     final selected = await showModalBottomSheet<ExpenseCategory>(
@@ -165,6 +208,33 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     }
   }
 
+  Future<void> _pickDate(BuildContext context) async {
+    FocusScope.of(context).unfocus();
+    final currentDate = widget.viewModel.state.selectedDate;
+    final initialDate = DateTime(
+      currentDate.year,
+      currentDate.month,
+      currentDate.day,
+    );
+    final now = DateTime.now();
+    var minYear = now.year - 100;
+    var maxYear = now.year + 100;
+    if (currentDate.year < minYear) minYear = currentDate.year;
+    if (currentDate.year > maxYear) maxYear = currentDate.year;
+
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime(minYear, 1, 1),
+      lastDate: DateTime(maxYear, 12, 31),
+      locale: const Locale('id', 'ID'),
+    );
+
+    if (picked != null && mounted) {
+      widget.viewModel.updateDate(ExpenseDate.fromDateTime(picked));
+    }
+  }
+
   String? _errorText(AppLocalizations l10n, String? key) {
     if (key == null) return null;
     return switch (key) {
@@ -173,6 +243,8 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
       'formAmountInvalid' => l10n.formAmountInvalid,
       'formAmountTooLarge' => l10n.formAmountTooLarge,
       'formCategoryRequired' => l10n.formCategoryRequired,
+      'formDateRequired' => l10n.formDateRequired,
+      'formNoteTooLong' => l10n.formNoteTooLong,
       _ => key,
     };
   }
@@ -201,6 +273,15 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                 l10n,
                 state.fieldErrors['category'],
               );
+              final dateError = _errorText(
+                l10n,
+                state.fieldErrors['transactionDate'],
+              );
+              final noteError = _errorText(l10n, state.fieldErrors['note']);
+              final formattedDate = _dateFormatter.formatForm(
+                state.selectedDate,
+              );
+
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -222,9 +303,23 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                     enabled: !state.isSubmitting,
                     onTap: () => _pickCategory(context),
                   ),
-                  // P3-007 — Date field placeholder
                   const SizedBox(height: AppSpacing.fieldGap),
-                  // P3-007 — Note field placeholder
+                  _DateField(
+                    label: l10n.formDateLabel,
+                    formattedDate: formattedDate,
+                    errorText: dateError,
+                    enabled: !state.isSubmitting,
+                    onTap: () => _pickDate(context),
+                  ),
+                  const SizedBox(height: AppSpacing.fieldGap),
+                  _NoteField(
+                    controller: _noteController,
+                    label: l10n.formNoteLabel,
+                    placeholder: l10n.formNotePlaceholder,
+                    errorText: noteError,
+                    enabled: !state.isSubmitting,
+                    onChanged: _onNoteChanged,
+                  ),
                   const SizedBox(height: AppSpacing.fieldGap),
                   // P3-008 — Submit button placeholder
                 ],
@@ -263,6 +358,7 @@ class _AmountField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TextField(
+      key: const Key('expense_form_amount_field'),
       controller: controller,
       focusNode: focusNode,
       enabled: enabled,
@@ -313,6 +409,7 @@ class _CategoryField extends StatelessWidget {
         : placeholder;
 
     return InkWell(
+      key: const Key('expense_form_category_field'),
       onTap: enabled ? onTap : null,
       borderRadius: AppShapes.inputRadius,
       child: InputDecorator(
@@ -333,6 +430,107 @@ class _CategoryField extends StatelessWidget {
                 ),
         ),
       ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Private sub-widget: Date field
+// ---------------------------------------------------------------------------
+
+class _DateField extends StatelessWidget {
+  const _DateField({
+    required this.label,
+    required this.formattedDate,
+    required this.onTap,
+    this.errorText,
+    this.enabled = true,
+  });
+
+  final String label;
+  final String formattedDate;
+  final VoidCallback onTap;
+  final String? errorText;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return InkWell(
+      key: const Key('expense_form_date_field'),
+      onTap: enabled ? onTap : null,
+      borderRadius: AppShapes.inputRadius,
+      child: InputDecorator(
+        isEmpty: false,
+        decoration: InputDecoration(
+          labelText: label,
+          floatingLabelBehavior: FloatingLabelBehavior.always,
+          errorText: errorText,
+          enabled: enabled,
+          suffixIcon: const Icon(Icons.calendar_today_outlined),
+        ),
+        child: Text(
+          formattedDate,
+          style: theme.textTheme.bodyLarge,
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Private sub-widget: Note field
+// ---------------------------------------------------------------------------
+
+class _NoteField extends StatelessWidget {
+  const _NoteField({
+    required this.controller,
+    required this.label,
+    required this.placeholder,
+    required this.onChanged,
+    this.errorText,
+    this.enabled = true,
+  });
+
+  final TextEditingController controller;
+  final String label;
+  final String placeholder;
+  final ValueChanged<String> onChanged;
+  final String? errorText;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: controller,
+      builder: (context, _) {
+        final count = controller.text.characters.length;
+        return TextField(
+          key: const Key('expense_form_note_field'),
+          controller: controller,
+          enabled: enabled,
+          keyboardType: TextInputType.multiline,
+          textInputAction: TextInputAction.newline,
+          minLines: 2,
+          maxLines: 4,
+          inputFormatters: const [
+            GraphemeLengthLimitingTextInputFormatter(
+              ExpenseValidator.maxNoteGraphemes,
+            ),
+          ],
+          onChanged: onChanged,
+          decoration: InputDecoration(
+            labelText: label,
+            hintText: placeholder,
+            errorText: errorText,
+            floatingLabelBehavior: FloatingLabelBehavior.always,
+            counter: Text(
+              '$count/${ExpenseValidator.maxNoteGraphemes}',
+              style: AppTypography.counter,
+            ),
+          ),
+        );
+      },
     );
   }
 }

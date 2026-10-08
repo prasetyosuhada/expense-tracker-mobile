@@ -31,14 +31,16 @@ void main() {
   ExpenseFormViewModel buildEditViewModel({
     required int amount,
     ExpenseCategory category = ExpenseCategory.food,
+    ExpenseDate? transactionDate,
+    String? note,
   }) {
     final clock = buildClock();
     final expense = Expense(
       id: 1,
       amount: amount,
       category: category,
-      transactionDate: ExpenseDate(2026, 9, 20),
-      note: null,
+      transactionDate: transactionDate ?? ExpenseDate(2026, 9, 20),
+      note: note,
       createdAt: DateTime.utc(2026, 9, 20),
       updatedAt: DateTime.utc(2026, 9, 20),
     );
@@ -54,6 +56,13 @@ void main() {
       home: ExpenseFormScreen(viewModel: viewModel),
     );
   }
+
+  final amountFieldFinder = find.byKey(const Key('expense_form_amount_field'));
+  final categoryFieldFinder = find.byKey(
+    const Key('expense_form_category_field'),
+  );
+  final dateFieldFinder = find.byKey(const Key('expense_form_date_field'));
+  final noteFieldFinder = find.byKey(const Key('expense_form_note_field'));
 
   // ---------------------------------------------------------------------------
   // ThousandsSeparatorInputFormatter unit tests
@@ -122,6 +131,33 @@ void main() {
     });
   });
 
+  group('GraphemeLengthLimitingTextInputFormatter', () {
+    const formatter = GraphemeLengthLimitingTextInputFormatter(5);
+
+    TextEditingValue applyFormat(String text) {
+      return formatter.formatEditUpdate(
+        const TextEditingValue(),
+        TextEditingValue(
+          text: text,
+          selection: TextSelection.collapsed(offset: text.length),
+        ),
+      );
+    }
+
+    test('accepts text within grapheme limit', () {
+      expect(applyFormat('hello').text, 'hello');
+    });
+
+    test('truncates text exceeding limit to max graphemes', () {
+      expect(applyFormat('helloworld').text, 'hello');
+    });
+
+    test('treats compound emoji as single grapheme', () {
+      expect(applyFormat('👨‍👩‍👧‍👦abcd').text, '👨‍👩‍👧‍👦abcd');
+      expect(applyFormat('👨‍👩‍👧‍👦abcde').text, '👨‍👩‍👧‍👦abcd');
+    });
+  });
+
   // ---------------------------------------------------------------------------
   // ExpenseFormScreen widget tests
   // ---------------------------------------------------------------------------
@@ -142,7 +178,7 @@ void main() {
       // Prefix text 'Rp ' is rendered by prefixText in InputDecoration.
       expect(find.text('Rp '), findsOneWidget);
 
-      final field = tester.widget<TextField>(find.byType(TextField));
+      final field = tester.widget<TextField>(amountFieldFinder);
       expect(field.controller?.text, '');
     });
 
@@ -151,7 +187,7 @@ void main() {
       addTearDown(vm.dispose);
       await tester.pumpWidget(buildTestWidget(vm));
 
-      await tester.enterText(find.byType(TextField), '25000');
+      await tester.enterText(amountFieldFinder, '25000');
       await tester.pump();
 
       expect(find.text('25.000'), findsOneWidget);
@@ -162,10 +198,10 @@ void main() {
       addTearDown(vm.dispose);
       await tester.pumpWidget(buildTestWidget(vm));
 
-      await tester.enterText(find.byType(TextField), 'abc');
+      await tester.enterText(amountFieldFinder, 'abc');
       await tester.pump();
 
-      final field = tester.widget<TextField>(find.byType(TextField));
+      final field = tester.widget<TextField>(amountFieldFinder);
       expect(field.controller?.text, '');
     });
 
@@ -176,11 +212,11 @@ void main() {
       addTearDown(vm.dispose);
       await tester.pumpWidget(buildTestWidget(vm));
 
-      await tester.enterText(find.byType(TextField), 'abc5000xyz');
+      await tester.enterText(amountFieldFinder, 'abc5000xyz');
       await tester.pump();
 
       // Field should show only formatted digits.
-      final field = tester.widget<TextField>(find.byType(TextField));
+      final field = tester.widget<TextField>(amountFieldFinder);
       expect(field.controller?.text, '5.000');
     });
 
@@ -191,7 +227,7 @@ void main() {
       addTearDown(vm.dispose);
       await tester.pumpWidget(buildTestWidget(vm));
 
-      await tester.enterText(find.byType(TextField), '75000');
+      await tester.enterText(amountFieldFinder, '75000');
       await tester.pump();
 
       // ViewModel should hold raw digits, not formatted string.
@@ -205,7 +241,7 @@ void main() {
       addTearDown(vm.dispose);
       await tester.pumpWidget(buildTestWidget(vm));
 
-      await tester.enterText(find.byType(TextField), '999999999999');
+      await tester.enterText(amountFieldFinder, '999999999999');
       await tester.pump();
 
       expect(find.text('999.999.999.999'), findsOneWidget);
@@ -228,7 +264,7 @@ void main() {
       addTearDown(vm.dispose);
       await tester.pumpWidget(buildTestWidget(vm));
 
-      final field = tester.widget<TextField>(find.byType(TextField));
+      final field = tester.widget<TextField>(amountFieldFinder);
       expect(field.controller?.text, '35.000');
     });
 
@@ -241,6 +277,20 @@ void main() {
       await tester.pumpWidget(buildTestWidget(vm));
 
       expect(find.text('Transportasi'), findsOneWidget);
+    });
+
+    testWidgets('pre-fills date and note in edit mode', (tester) async {
+      final vm = buildEditViewModel(
+        amount: 35000,
+        transactionDate: ExpenseDate(2026, 8, 15),
+        note: 'Catatan makan siang',
+      );
+      addTearDown(vm.dispose);
+      await tester.pumpWidget(buildTestWidget(vm));
+
+      expect(find.text('15 Agustus 2026'), findsOneWidget);
+      expect(find.text('Catatan makan siang'), findsOneWidget);
+      expect(find.text('19/100'), findsOneWidget);
     });
   });
 
@@ -266,7 +316,7 @@ void main() {
         addTearDown(vm.dispose);
         await tester.pumpWidget(buildTestWidget(vm));
 
-        await tester.enterText(find.byType(TextField), '0');
+        await tester.enterText(amountFieldFinder, '0');
         await tester.pump();
 
         await vm.submit();
@@ -283,7 +333,7 @@ void main() {
         addTearDown(vm.dispose);
         await tester.pumpWidget(buildTestWidget(vm));
 
-        await tester.enterText(find.byType(TextField), '1000000000000');
+        await tester.enterText(amountFieldFinder, '1000000000000');
         await tester.pump();
 
         await vm.submit();
@@ -313,7 +363,7 @@ void main() {
         addTearDown(vm.dispose);
         await tester.pumpWidget(buildTestWidget(vm));
 
-        await tester.tap(find.text('Pilih kategori'));
+        await tester.tap(categoryFieldFinder);
         await tester.pumpAndSettle();
 
         // Modal bottom sheet header
@@ -347,7 +397,7 @@ void main() {
       addTearDown(vm.dispose);
       await tester.pumpWidget(buildTestWidget(vm));
 
-      await tester.tap(find.text('Pilih kategori'));
+      await tester.tap(categoryFieldFinder);
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('Makanan'));
@@ -374,8 +424,7 @@ void main() {
       ];
 
       for (final (category, label) in cases) {
-        final targetFinder = find.byType(InkWell).last;
-        await tester.tap(targetFinder);
+        await tester.tap(categoryFieldFinder);
         await tester.pumpAndSettle();
 
         await tester.tap(find.text(label));
@@ -412,7 +461,7 @@ void main() {
 
       expect(find.text('Kategori wajib dipilih'), findsOneWidget);
 
-      await tester.tap(find.text('Pilih kategori'));
+      await tester.tap(categoryFieldFinder);
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('Makanan'));
@@ -432,7 +481,7 @@ void main() {
         addTearDown(vm.dispose);
         await tester.pumpWidget(buildTestWidget(vm));
 
-        await tester.tap(find.text('Tagihan'));
+        await tester.tap(categoryFieldFinder);
         await tester.pumpAndSettle();
 
         expect(find.byIcon(Icons.check), findsOneWidget);
@@ -449,7 +498,7 @@ void main() {
         addTearDown(vm.dispose);
         await tester.pumpWidget(buildTestWidget(vm));
 
-        await tester.tap(find.text('Belanja'));
+        await tester.tap(categoryFieldFinder);
         await tester.pumpAndSettle();
 
         // Dismiss by tapping barrier (scrim)
@@ -460,5 +509,147 @@ void main() {
         expect(vm.state.selectedCategory, ExpenseCategory.shopping);
       },
     );
+  });
+
+  group('ExpenseFormScreen — date field & picker', () {
+    testWidgets('displays initial date formatted in Indonesian', (
+      tester,
+    ) async {
+      final vm = buildAddViewModel();
+      addTearDown(vm.dispose);
+      await tester.pumpWidget(buildTestWidget(vm));
+
+      // Built with fake clock at 2026-09-20
+      expect(find.text('20 September 2026'), findsOneWidget);
+    });
+
+    testWidgets('tap date field opens Material date picker dialog', (
+      tester,
+    ) async {
+      final vm = buildAddViewModel();
+      addTearDown(vm.dispose);
+      await tester.pumpWidget(buildTestWidget(vm));
+
+      await tester.tap(dateFieldFinder);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(DatePickerDialog), findsOneWidget);
+    });
+
+    testWidgets('cancelling date picker retains previous date', (tester) async {
+      final vm = buildAddViewModel();
+      addTearDown(vm.dispose);
+      await tester.pumpWidget(buildTestWidget(vm));
+
+      await tester.tap(dateFieldFinder);
+      await tester.pumpAndSettle();
+
+      final localizations = MaterialLocalizations.of(
+        tester.element(find.byType(DatePickerDialog)),
+      );
+      await tester.tap(find.text(localizations.cancelButtonLabel));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(DatePickerDialog), findsNothing);
+      expect(find.text('20 September 2026'), findsOneWidget);
+      expect(vm.state.selectedDate, ExpenseDate(2026, 9, 20));
+    });
+
+    testWidgets('selecting date in picker updates field and view model', (
+      tester,
+    ) async {
+      final vm = buildAddViewModel();
+      addTearDown(vm.dispose);
+      await tester.pumpWidget(buildTestWidget(vm));
+
+      await tester.tap(dateFieldFinder);
+      await tester.pumpAndSettle();
+
+      // Pick day '25'
+      await tester.tap(find.text('25'));
+      await tester.pumpAndSettle();
+
+      final localizations = MaterialLocalizations.of(
+        tester.element(find.byType(DatePickerDialog)),
+      );
+      await tester.tap(find.text(localizations.okButtonLabel));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(DatePickerDialog), findsNothing);
+      expect(find.text('25 September 2026'), findsOneWidget);
+      expect(vm.state.selectedDate, ExpenseDate(2026, 9, 25));
+    });
+  });
+
+  group('ExpenseFormScreen — note field & counter', () {
+    testWidgets('starts empty with 0/100 counter and placeholder', (
+      tester,
+    ) async {
+      final vm = buildAddViewModel();
+      addTearDown(vm.dispose);
+      await tester.pumpWidget(buildTestWidget(vm));
+
+      expect(find.text('0/100'), findsOneWidget);
+      expect(find.text('Contoh: Makan siang bersama teman'), findsOneWidget);
+    });
+
+    testWidgets('typing 50 characters shows 50/100', (tester) async {
+      final vm = buildAddViewModel();
+      addTearDown(vm.dispose);
+      await tester.pumpWidget(buildTestWidget(vm));
+
+      final text50 = 'a' * 50;
+      await tester.enterText(noteFieldFinder, text50);
+      await tester.pump();
+
+      expect(find.text('50/100'), findsOneWidget);
+      expect(vm.state.noteText, text50);
+    });
+
+    testWidgets(
+      'typing 100 characters shows 100/100; 101st character is blocked',
+      (tester) async {
+        final vm = buildAddViewModel();
+        addTearDown(vm.dispose);
+        await tester.pumpWidget(buildTestWidget(vm));
+
+        final text105 = 'b' * 105;
+        await tester.enterText(noteFieldFinder, text105);
+        await tester.pump();
+
+        expect(find.text('100/100'), findsOneWidget);
+        final field = tester.widget<TextField>(noteFieldFinder);
+        expect(field.controller?.text.length, 100);
+        expect(vm.state.noteText.length, 100);
+      },
+    );
+
+    testWidgets('compound emoji is counted as 1 by counter', (tester) async {
+      final vm = buildAddViewModel();
+      addTearDown(vm.dispose);
+      await tester.pumpWidget(buildTestWidget(vm));
+
+      // 👨‍👩‍👧‍👦 is a multi-code-point emoji (ZWH sequence) but 1 grapheme
+      await tester.enterText(noteFieldFinder, '👨‍👩‍👧‍👦');
+      await tester.pump();
+
+      expect(find.text('1/100'), findsOneWidget);
+
+      await tester.enterText(noteFieldFinder, '👨‍👩‍👧‍👦ab');
+      await tester.pump();
+
+      expect(find.text('3/100'), findsOneWidget);
+    });
+
+    testWidgets('newline is counted as 1 character by counter', (tester) async {
+      final vm = buildAddViewModel();
+      addTearDown(vm.dispose);
+      await tester.pumpWidget(buildTestWidget(vm));
+
+      await tester.enterText(noteFieldFinder, 'a\nb');
+      await tester.pump();
+
+      expect(find.text('3/100'), findsOneWidget);
+    });
   });
 }

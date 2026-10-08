@@ -34,7 +34,10 @@
   "formCategoryPlaceholder": "Pilih kategori",
   "formCategoryPickerTitle": "Pilih Kategori",
   "formCategoryRequired": "Kategori wajib dipilih",
+  "formDateLabel": "Tanggal",
   "formDateRequired": "Tanggal wajib dipilih",
+  "formNoteLabel": "Catatan",
+  "formNotePlaceholder": "Contoh: Makan siang bersama teman",
   "formNoteTooLong": "Catatan maksimal 100 karakter",
   "expenseActionMenuSemanticLabel": "Tindakan transaksi {category} {amount}",
   "@expenseActionMenuSemanticLabel": {

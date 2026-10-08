@@ -115,7 +115,16 @@ class AppLocalizationsId extends AppLocalizations {
   String get formCategoryRequired => 'Kategori wajib dipilih';
 
   @override
+  String get formDateLabel => 'Tanggal';
+
+  @override
   String get formDateRequired => 'Tanggal wajib dipilih';
+
+  @override
+  String get formNoteLabel => 'Catatan';
+
+  @override
+  String get formNotePlaceholder => 'Contoh: Makan siang bersama teman';
 
   @override
   String get formNoteTooLong => 'Catatan maksimal 100 karakter';

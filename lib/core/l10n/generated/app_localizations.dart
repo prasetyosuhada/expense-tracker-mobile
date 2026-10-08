@@ -298,11 +298,29 @@ abstract class AppLocalizations {
   /// **'Kategori wajib dipilih'**
   String get formCategoryRequired;
 
+  /// No description provided for @formDateLabel.
+  ///
+  /// In id, this message translates to:
+  /// **'Tanggal'**
+  String get formDateLabel;
+
   /// No description provided for @formDateRequired.
   ///
   /// In id, this message translates to:
   /// **'Tanggal wajib dipilih'**
   String get formDateRequired;
+
+  /// No description provided for @formNoteLabel.
+  ///
+  /// In id, this message translates to:
+  /// **'Catatan'**
+  String get formNoteLabel;
+
+  /// No description provided for @formNotePlaceholder.
+  ///
+  /// In id, this message translates to:
+  /// **'Contoh: Makan siang bersama teman'**
+  String get formNotePlaceholder;
 
   /// No description provided for @formNoteTooLong.
   ///
