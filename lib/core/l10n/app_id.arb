@@ -27,5 +27,19 @@
   "formAmountTooLarge": "Nominal terlalu besar",
   "formCategoryRequired": "Kategori wajib dipilih",
   "formDateRequired": "Tanggal wajib dipilih",
-  "formNoteTooLong": "Catatan maksimal 100 karakter"
+  "formNoteTooLong": "Catatan maksimal 100 karakter",
+  "expenseActionMenuSemanticLabel": "Tindakan transaksi {category} {amount}",
+  "@expenseActionMenuSemanticLabel": {
+    "description": "Label semantik untuk menu tindakan transaksi",
+    "placeholders": {
+      "category": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "editAction": "Edit",
+  "deleteAction": "Hapus"
 }

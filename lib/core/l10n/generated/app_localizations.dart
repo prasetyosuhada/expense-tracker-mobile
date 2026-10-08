@@ -261,6 +261,24 @@ abstract class AppLocalizations {
   /// In id, this message translates to:
   /// **'Catatan maksimal 100 karakter'**
   String get formNoteTooLong;
+
+  /// Label semantik untuk menu tindakan transaksi
+  ///
+  /// In id, this message translates to:
+  /// **'Tindakan transaksi {category} {amount}'**
+  String expenseActionMenuSemanticLabel(String category, String amount);
+
+  /// No description provided for @editAction.
+  ///
+  /// In id, this message translates to:
+  /// **'Edit'**
+  String get editAction;
+
+  /// No description provided for @deleteAction.
+  ///
+  /// In id, this message translates to:
+  /// **'Hapus'**
+  String get deleteAction;
 }
 
 class _AppLocalizationsDelegate

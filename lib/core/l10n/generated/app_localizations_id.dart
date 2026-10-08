@@ -95,4 +95,15 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get formNoteTooLong => 'Catatan maksimal 100 karakter';
+
+  @override
+  String expenseActionMenuSemanticLabel(String category, String amount) {
+    return 'Tindakan transaksi $category $amount';
+  }
+
+  @override
+  String get editAction => 'Edit';
+
+  @override
+  String get deleteAction => 'Hapus';
 }
