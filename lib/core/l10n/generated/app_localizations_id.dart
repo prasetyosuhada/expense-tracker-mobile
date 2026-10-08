@@ -103,6 +103,15 @@ class AppLocalizationsId extends AppLocalizations {
   String get formAmountTooLarge => 'Nominal terlalu besar';
 
   @override
+  String get formCategoryLabel => 'Kategori';
+
+  @override
+  String get formCategoryPlaceholder => 'Pilih kategori';
+
+  @override
+  String get formCategoryPickerTitle => 'Pilih Kategori';
+
+  @override
   String get formCategoryRequired => 'Kategori wajib dipilih';
 
   @override

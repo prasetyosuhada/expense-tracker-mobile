@@ -28,12 +28,15 @@ void main() {
     return ExpenseFormViewModel(buildRepo(clock), clock);
   }
 
-  ExpenseFormViewModel buildEditViewModel({required int amount}) {
+  ExpenseFormViewModel buildEditViewModel({
+    required int amount,
+    ExpenseCategory category = ExpenseCategory.food,
+  }) {
     final clock = buildClock();
     final expense = Expense(
       id: 1,
       amount: amount,
-      category: ExpenseCategory.food,
+      category: category,
       transactionDate: ExpenseDate(2026, 9, 20),
       note: null,
       createdAt: DateTime.utc(2026, 9, 20),
@@ -228,6 +231,17 @@ void main() {
       final field = tester.widget<TextField>(find.byType(TextField));
       expect(field.controller?.text, '35.000');
     });
+
+    testWidgets('pre-selects category in edit mode', (tester) async {
+      final vm = buildEditViewModel(
+        amount: 35000,
+        category: ExpenseCategory.transportation,
+      );
+      addTearDown(vm.dispose);
+      await tester.pumpWidget(buildTestWidget(vm));
+
+      expect(find.text('Transportasi'), findsOneWidget);
+    });
   });
 
   group('ExpenseFormScreen — amount validation errors', () {
@@ -276,6 +290,174 @@ void main() {
         await tester.pump();
 
         expect(find.text('Nominal terlalu besar'), findsOneWidget);
+      },
+    );
+  });
+
+  group('ExpenseFormScreen — category field & bottom sheet', () {
+    testWidgets('shows "Pilih kategori" placeholder initially in add mode', (
+      tester,
+    ) async {
+      final vm = buildAddViewModel();
+      addTearDown(vm.dispose);
+      await tester.pumpWidget(buildTestWidget(vm));
+
+      expect(find.text('Pilih kategori'), findsOneWidget);
+      expect(vm.state.selectedCategory, isNull);
+    });
+
+    testWidgets(
+      'tapping category field opens bottom sheet with 5 categories in order',
+      (tester) async {
+        final vm = buildAddViewModel();
+        addTearDown(vm.dispose);
+        await tester.pumpWidget(buildTestWidget(vm));
+
+        await tester.tap(find.text('Pilih kategori'));
+        await tester.pumpAndSettle();
+
+        // Modal bottom sheet header
+        expect(find.text('Pilih Kategori'), findsOneWidget);
+
+        // Verify all 5 categories are present
+        expect(find.text('Makanan'), findsOneWidget);
+        expect(find.text('Transportasi'), findsOneWidget);
+        expect(find.text('Belanja'), findsOneWidget);
+        expect(find.text('Tagihan'), findsOneWidget);
+        expect(find.text('Lainnya'), findsOneWidget);
+
+        // Verify vertical order (top to bottom)
+        final foodY = tester.getTopLeft(find.text('Makanan')).dy;
+        final transY = tester.getTopLeft(find.text('Transportasi')).dy;
+        final shopY = tester.getTopLeft(find.text('Belanja')).dy;
+        final billsY = tester.getTopLeft(find.text('Tagihan')).dy;
+        final otherY = tester.getTopLeft(find.text('Lainnya')).dy;
+
+        expect(foodY < transY, isTrue);
+        expect(transY < shopY, isTrue);
+        expect(shopY < billsY, isTrue);
+        expect(billsY < otherY, isTrue);
+      },
+    );
+
+    testWidgets('selecting "Makanan" closes sheet and updates field', (
+      tester,
+    ) async {
+      final vm = buildAddViewModel();
+      addTearDown(vm.dispose);
+      await tester.pumpWidget(buildTestWidget(vm));
+
+      await tester.tap(find.text('Pilih kategori'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Makanan'));
+      await tester.pumpAndSettle();
+
+      // Bottom sheet closed
+      expect(find.text('Pilih Kategori'), findsNothing);
+      // Field displays selected category
+      expect(find.text('Makanan'), findsOneWidget);
+      expect(vm.state.selectedCategory, ExpenseCategory.food);
+    });
+
+    testWidgets('all 5 categories can be selected', (tester) async {
+      final vm = buildAddViewModel();
+      addTearDown(vm.dispose);
+      await tester.pumpWidget(buildTestWidget(vm));
+
+      const cases = [
+        (ExpenseCategory.food, 'Makanan'),
+        (ExpenseCategory.transportation, 'Transportasi'),
+        (ExpenseCategory.shopping, 'Belanja'),
+        (ExpenseCategory.bills, 'Tagihan'),
+        (ExpenseCategory.other, 'Lainnya'),
+      ];
+
+      for (final (category, label) in cases) {
+        final targetFinder = find.byType(InkWell).last;
+        await tester.tap(targetFinder);
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text(label));
+        await tester.pumpAndSettle();
+
+        expect(find.text(label), findsOneWidget);
+        expect(vm.state.selectedCategory, category);
+      }
+    });
+
+    testWidgets(
+      'submitting without category displays "Kategori wajib dipilih"',
+      (tester) async {
+        final vm = buildAddViewModel();
+        addTearDown(vm.dispose);
+        await tester.pumpWidget(buildTestWidget(vm));
+
+        await vm.submit();
+        await tester.pump();
+
+        expect(find.text('Kategori wajib dipilih'), findsOneWidget);
+      },
+    );
+
+    testWidgets('selecting a category clears "Kategori wajib dipilih" error', (
+      tester,
+    ) async {
+      final vm = buildAddViewModel();
+      addTearDown(vm.dispose);
+      await tester.pumpWidget(buildTestWidget(vm));
+
+      await vm.submit();
+      await tester.pump();
+
+      expect(find.text('Kategori wajib dipilih'), findsOneWidget);
+
+      await tester.tap(find.text('Pilih kategori'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Makanan'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Kategori wajib dipilih'), findsNothing);
+      expect(find.text('Makanan'), findsOneWidget);
+    });
+
+    testWidgets(
+      'bottom sheet shows active check indicator for selected category',
+      (tester) async {
+        final vm = buildEditViewModel(
+          amount: 50000,
+          category: ExpenseCategory.bills,
+        );
+        addTearDown(vm.dispose);
+        await tester.pumpWidget(buildTestWidget(vm));
+
+        await tester.tap(find.text('Tagihan'));
+        await tester.pumpAndSettle();
+
+        expect(find.byIcon(Icons.check), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'dismissing bottom sheet retains previously selected category',
+      (tester) async {
+        final vm = buildEditViewModel(
+          amount: 50000,
+          category: ExpenseCategory.shopping,
+        );
+        addTearDown(vm.dispose);
+        await tester.pumpWidget(buildTestWidget(vm));
+
+        await tester.tap(find.text('Belanja'));
+        await tester.pumpAndSettle();
+
+        // Dismiss by tapping barrier (scrim)
+        await tester.tapAt(const Offset(20, 20));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Belanja'), findsOneWidget);
+        expect(vm.state.selectedCategory, ExpenseCategory.shopping);
       },
     );
   });

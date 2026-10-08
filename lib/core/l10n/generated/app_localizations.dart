@@ -274,6 +274,24 @@ abstract class AppLocalizations {
   /// **'Nominal terlalu besar'**
   String get formAmountTooLarge;
 
+  /// No description provided for @formCategoryLabel.
+  ///
+  /// In id, this message translates to:
+  /// **'Kategori'**
+  String get formCategoryLabel;
+
+  /// No description provided for @formCategoryPlaceholder.
+  ///
+  /// In id, this message translates to:
+  /// **'Pilih kategori'**
+  String get formCategoryPlaceholder;
+
+  /// No description provided for @formCategoryPickerTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Pilih Kategori'**
+  String get formCategoryPickerTitle;
+
   /// No description provided for @formCategoryRequired.
   ///
   /// In id, this message translates to:

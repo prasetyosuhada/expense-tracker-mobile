@@ -4,8 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:expensetracker/core/l10n/generated/app_localizations.dart';
+import 'package:expensetracker/core/theme/app_colors.dart';
+import 'package:expensetracker/core/theme/app_shapes.dart';
 import 'package:expensetracker/core/theme/app_spacing.dart';
+import 'package:expensetracker/core/theme/app_typography.dart';
+import 'package:expensetracker/core/theme/category_colors.dart';
+import 'package:expensetracker/features/expenses/domain/expense_category.dart';
 import 'package:expensetracker/features/expenses/presentation/expense_form/expense_form_view_model.dart';
+import 'package:expensetracker/features/expenses/presentation/widgets/expense_list_item.dart';
 
 /// Formats typed digits with Indonesian dot-thousand separators and sends
 /// raw digits back to the controller so [ExpenseFormViewModel.updateAmount]
@@ -80,7 +86,7 @@ class ThousandsSeparatorInputFormatter extends TextInputFormatter {
 }
 
 /// The add/edit expense form screen, built incrementally across P3-005 to
-/// P3-008. This version (P3-005) wires up the Amount field only; category,
+/// P3-008. This version (P3-006) wires up Amount and Category fields;
 /// date, note, and the submit button are stubbed and will be completed by the
 /// subsequent tasks.
 class ExpenseFormScreen extends StatefulWidget {
@@ -142,6 +148,23 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     widget.viewModel.updateAmount(raw);
   }
 
+  Future<void> _pickCategory(BuildContext context) async {
+    FocusScope.of(context).unfocus();
+    final selected = await showModalBottomSheet<ExpenseCategory>(
+      context: context,
+      useSafeArea: true,
+      isScrollControlled: true,
+      showDragHandle: true,
+      shape: const RoundedRectangleBorder(borderRadius: AppShapes.sheetRadius),
+      builder: (sheetContext) => CategoryPickerSheet(
+        selectedCategory: widget.viewModel.state.selectedCategory,
+      ),
+    );
+    if (selected != null && mounted) {
+      widget.viewModel.updateCategory(selected);
+    }
+  }
+
   String? _errorText(AppLocalizations l10n, String? key) {
     if (key == null) return null;
     return switch (key) {
@@ -149,6 +172,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
       'formAmountZero' => l10n.formAmountZero,
       'formAmountInvalid' => l10n.formAmountInvalid,
       'formAmountTooLarge' => l10n.formAmountTooLarge,
+      'formCategoryRequired' => l10n.formCategoryRequired,
       _ => key,
     };
   }
@@ -173,6 +197,10 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
             builder: (context, _) {
               final state = widget.viewModel.state;
               final amountError = _errorText(l10n, state.fieldErrors['amount']);
+              final categoryError = _errorText(
+                l10n,
+                state.fieldErrors['category'],
+              );
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -185,8 +213,15 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                     enabled: !state.isSubmitting,
                     onChanged: _onAmountChanged,
                   ),
-                  // P3-006 — Category field placeholder
                   const SizedBox(height: AppSpacing.fieldGap),
+                  _CategoryField(
+                    label: l10n.formCategoryLabel,
+                    placeholder: l10n.formCategoryPlaceholder,
+                    selectedCategory: state.selectedCategory,
+                    errorText: categoryError,
+                    enabled: !state.isSubmitting,
+                    onTap: () => _pickCategory(context),
+                  ),
                   // P3-007 — Date field placeholder
                   const SizedBox(height: AppSpacing.fieldGap),
                   // P3-007 — Note field placeholder
@@ -243,6 +278,167 @@ class _AmountField extends StatelessWidget {
         prefixText: '$prefix ',
         errorText: errorText,
       ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Private sub-widget: Category field
+// ---------------------------------------------------------------------------
+
+class _CategoryField extends StatelessWidget {
+  const _CategoryField({
+    required this.label,
+    required this.placeholder,
+    required this.onTap,
+    this.selectedCategory,
+    this.errorText,
+    this.enabled = true,
+  });
+
+  final String label;
+  final String placeholder;
+  final VoidCallback onTap;
+  final ExpenseCategory? selectedCategory;
+  final String? errorText;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    final hasCategory = selectedCategory != null;
+    final text = hasCategory
+        ? ExpenseListItem.labelFor(l10n, selectedCategory!)
+        : placeholder;
+
+    return InkWell(
+      onTap: enabled ? onTap : null,
+      borderRadius: AppShapes.inputRadius,
+      child: InputDecorator(
+        isEmpty: !hasCategory,
+        decoration: InputDecoration(
+          labelText: label,
+          floatingLabelBehavior: FloatingLabelBehavior.always,
+          errorText: errorText,
+          enabled: enabled,
+          suffixIcon: const Icon(Icons.keyboard_arrow_down),
+        ),
+        child: Text(
+          text,
+          style: hasCategory
+              ? theme.textTheme.bodyLarge
+              : AppTypography.supportingBody.copyWith(
+                  color: AppColors.textMuted,
+                ),
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Bottom Sheet: Category Picker
+// ---------------------------------------------------------------------------
+
+/// Modal bottom sheet allowing single selection from fixed expense categories.
+class CategoryPickerSheet extends StatelessWidget {
+  const CategoryPickerSheet({super.key, this.selectedCategory});
+
+  final ExpenseCategory? selectedCategory;
+
+  static const List<ExpenseCategory> categories = [
+    ExpenseCategory.food,
+    ExpenseCategory.transportation,
+    ExpenseCategory.shopping,
+    ExpenseCategory.bills,
+    ExpenseCategory.other,
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    final colors = theme.extension<CategoryColors>() ?? CategoryColors.light;
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.screenPadding,
+                vertical: AppSpacing.xs,
+              ),
+              child: Text(
+                l10n.formCategoryPickerTitle,
+                style: theme.textTheme.titleMedium,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            for (final category in categories)
+              _CategoryOptionTile(
+                category: category,
+                label: ExpenseListItem.labelFor(l10n, category),
+                icon: ExpenseListItem.iconFor(category),
+                backgroundColor: colors.backgroundFor(category),
+                foregroundColor: colors.foregroundFor(category),
+                isSelected: category == selectedCategory,
+                onTap: () => Navigator.of(context).pop(category),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CategoryOptionTile extends StatelessWidget {
+  const _CategoryOptionTile({
+    required this.category,
+    required this.label,
+    required this.icon,
+    required this.backgroundColor,
+    required this.foregroundColor,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final ExpenseCategory category;
+  final String label;
+  final IconData icon;
+  final Color backgroundColor;
+  final Color foregroundColor;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ListTile(
+      leading: Container(
+        width: AppSpacing.categoryCircle,
+        height: AppSpacing.categoryCircle,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: backgroundColor,
+        ),
+        child: Icon(icon, color: foregroundColor, size: AppSpacing.iconSize),
+      ),
+      title: Text(
+        label,
+        style: theme.textTheme.bodyLarge?.copyWith(
+          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+        ),
+      ),
+      trailing: isSelected
+          ? const Icon(Icons.check, color: AppColors.onPrimary)
+          : null,
+      selected: isSelected,
+      onTap: onTap,
     );
   }
 }
