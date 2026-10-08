@@ -190,6 +190,30 @@ abstract class AppLocalizations {
   /// **'Data pengeluaran gagal diperbarui. Coba lagi.'**
   String get homeRefreshFailure;
 
+  /// No description provided for @transactionsTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Transaksi'**
+  String get transactionsTitle;
+
+  /// No description provided for @transactionsEmptyTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Belum ada transaksi'**
+  String get transactionsEmptyTitle;
+
+  /// No description provided for @transactionsEmptyDescription.
+  ///
+  /// In id, this message translates to:
+  /// **'Pengeluaran yang kamu tambahkan akan muncul di sini.'**
+  String get transactionsEmptyDescription;
+
+  /// No description provided for @transactionsRefreshFailure.
+  ///
+  /// In id, this message translates to:
+  /// **'Data transaksi gagal diperbarui. Coba lagi.'**
+  String get transactionsRefreshFailure;
+
   /// No description provided for @categoryFood.
   ///
   /// In id, this message translates to:

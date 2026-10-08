@@ -61,6 +61,20 @@ class AppLocalizationsId extends AppLocalizations {
       'Data pengeluaran gagal diperbarui. Coba lagi.';
 
   @override
+  String get transactionsTitle => 'Transaksi';
+
+  @override
+  String get transactionsEmptyTitle => 'Belum ada transaksi';
+
+  @override
+  String get transactionsEmptyDescription =>
+      'Pengeluaran yang kamu tambahkan akan muncul di sini.';
+
+  @override
+  String get transactionsRefreshFailure =>
+      'Data transaksi gagal diperbarui. Coba lagi.';
+
+  @override
   String get categoryFood => 'Makanan';
 
   @override

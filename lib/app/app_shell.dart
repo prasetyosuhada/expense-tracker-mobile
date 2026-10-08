@@ -11,6 +11,7 @@ import 'package:expensetracker/features/expenses/presentation/expense_form/expen
 import 'package:expensetracker/features/expenses/presentation/expense_form/expense_form_view_model.dart';
 import 'package:expensetracker/features/expenses/presentation/home/home_screen.dart';
 import 'package:expensetracker/features/expenses/presentation/home/home_view_model.dart';
+import 'package:expensetracker/features/expenses/presentation/transactions/transactions_screen.dart';
 import 'package:expensetracker/features/expenses/presentation/transactions/transactions_view_model.dart';
 
 typedef HomeDestinationBuilder = Widget Function(
@@ -165,7 +166,11 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
                     context,
                     _transactionsViewModel,
                   ) ??
-                  _DestinationFrame(title: l10n.navigationTransactions),
+                  TransactionsScreen(
+                    viewModel: _transactionsViewModel,
+                    onAddExpense: _openAddExpense,
+                    isActive: _selectedIndex == 1,
+                  ),
             ],
           ),
         ),
@@ -247,20 +252,5 @@ class _AddExpenseRouteState extends State<_AddExpenseRoute> {
   Widget build(BuildContext context) {
     return widget.builder?.call(context, _viewModel) ??
         ExpenseFormScreen(viewModel: _viewModel);
-  }
-}
-
-// Remaining P3 tasks supply the Transactions and form screen contents.
-class _DestinationFrame extends StatelessWidget {
-  const _DestinationFrame({required this.title});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: const SafeArea(child: SizedBox.expand()),
-    );
   }
 }
