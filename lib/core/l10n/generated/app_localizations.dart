@@ -345,6 +345,54 @@ abstract class AppLocalizations {
   /// In id, this message translates to:
   /// **'Hapus'**
   String get deleteAction;
+
+  /// No description provided for @discardChangesTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Buang perubahan?'**
+  String get discardChangesTitle;
+
+  /// No description provided for @discardChangesMessage.
+  ///
+  /// In id, this message translates to:
+  /// **'Perubahan yang belum disimpan akan hilang.'**
+  String get discardChangesMessage;
+
+  /// No description provided for @discardChangesStayAction.
+  ///
+  /// In id, this message translates to:
+  /// **'Tetap di sini'**
+  String get discardChangesStayAction;
+
+  /// No description provided for @discardChangesDiscardAction.
+  ///
+  /// In id, this message translates to:
+  /// **'Buang'**
+  String get discardChangesDiscardAction;
+
+  /// No description provided for @expenseAddedSuccess.
+  ///
+  /// In id, this message translates to:
+  /// **'Pengeluaran berhasil ditambahkan'**
+  String get expenseAddedSuccess;
+
+  /// No description provided for @expenseUpdatedSuccess.
+  ///
+  /// In id, this message translates to:
+  /// **'Pengeluaran berhasil diperbarui'**
+  String get expenseUpdatedSuccess;
+
+  /// No description provided for @expenseAddFailed.
+  ///
+  /// In id, this message translates to:
+  /// **'Pengeluaran gagal disimpan. Coba lagi.'**
+  String get expenseAddFailed;
+
+  /// No description provided for @expenseUpdateFailed.
+  ///
+  /// In id, this message translates to:
+  /// **'Perubahan gagal disimpan. Coba lagi.'**
+  String get expenseUpdateFailed;
 }
 
 class _AppLocalizationsDelegate

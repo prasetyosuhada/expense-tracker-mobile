@@ -139,4 +139,29 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get deleteAction => 'Hapus';
+
+  @override
+  String get discardChangesTitle => 'Buang perubahan?';
+
+  @override
+  String get discardChangesMessage =>
+      'Perubahan yang belum disimpan akan hilang.';
+
+  @override
+  String get discardChangesStayAction => 'Tetap di sini';
+
+  @override
+  String get discardChangesDiscardAction => 'Buang';
+
+  @override
+  String get expenseAddedSuccess => 'Pengeluaran berhasil ditambahkan';
+
+  @override
+  String get expenseUpdatedSuccess => 'Pengeluaran berhasil diperbarui';
+
+  @override
+  String get expenseAddFailed => 'Pengeluaran gagal disimpan. Coba lagi.';
+
+  @override
+  String get expenseUpdateFailed => 'Perubahan gagal disimpan. Coba lagi.';
 }

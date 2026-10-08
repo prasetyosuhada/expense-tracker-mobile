@@ -6,6 +6,7 @@ import 'package:expensetracker/core/clock/app_clock.dart';
 import 'package:expensetracker/core/l10n/generated/app_localizations.dart';
 import 'package:expensetracker/core/theme/app_shapes.dart';
 import 'package:expensetracker/features/expenses/domain/expense_repository.dart';
+import 'package:expensetracker/features/expenses/presentation/expense_form/expense_form_screen.dart';
 import 'package:expensetracker/features/expenses/presentation/expense_form/expense_form_state.dart';
 import 'package:expensetracker/features/expenses/presentation/expense_form/expense_form_view_model.dart';
 import 'package:expensetracker/features/expenses/presentation/home/home_screen.dart';
@@ -112,7 +113,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     if (_isFormOpen) return;
     _isFormOpen = true;
     try {
-      await Navigator.of(context).push<ExpenseFormResult>(
+      final result = await Navigator.of(context).push<ExpenseFormResult>(
         MaterialPageRoute<ExpenseFormResult>(
           builder: (context) => _AddExpenseRoute(
             clock: widget.clock,
@@ -121,6 +122,19 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
           ),
         ),
       );
+      if (!mounted || result == null || result == ExpenseFormResult.none) {
+        return;
+      }
+      final messenger = ScaffoldMessenger.of(context);
+      final l10n = AppLocalizations.of(context)!;
+      final message = switch (result) {
+        ExpenseFormResult.created => l10n.expenseAddedSuccess,
+        ExpenseFormResult.updated => l10n.expenseUpdatedSuccess,
+        ExpenseFormResult.none => null,
+      };
+      if (message != null) {
+        messenger.showSnackBar(SnackBar(content: Text(message)));
+      }
     } finally {
       _isFormOpen = false;
     }
@@ -232,7 +246,7 @@ class _AddExpenseRouteState extends State<_AddExpenseRoute> {
   @override
   Widget build(BuildContext context) {
     return widget.builder?.call(context, _viewModel) ??
-        _DestinationFrame(title: AppLocalizations.of(context)!.addExpenseTitle);
+        ExpenseFormScreen(viewModel: _viewModel);
   }
 }
 

@@ -13,6 +13,7 @@ import 'package:expensetracker/core/theme/category_colors.dart';
 import 'package:expensetracker/features/expenses/domain/expense_category.dart';
 import 'package:expensetracker/features/expenses/domain/expense_date.dart';
 import 'package:expensetracker/features/expenses/domain/expense_validator.dart';
+import 'package:expensetracker/features/expenses/presentation/expense_form/expense_form_state.dart';
 import 'package:expensetracker/features/expenses/presentation/expense_form/expense_form_view_model.dart';
 import 'package:expensetracker/features/expenses/presentation/widgets/expense_list_item.dart';
 
@@ -119,13 +120,16 @@ class GraphemeLengthLimitingTextInputFormatter extends TextInputFormatter {
   }
 }
 
-/// The add/edit expense form screen, built incrementally across P3-005 to
-/// P3-008. This version (P3-007) wires up Amount, Category, Date, and Note fields;
-/// the submit button is stubbed and will be completed by P3-008.
+/// The add/edit expense form screen (P3-008).
 class ExpenseFormScreen extends StatefulWidget {
-  const ExpenseFormScreen({super.key, required this.viewModel});
+  const ExpenseFormScreen({
+    super.key,
+    required this.viewModel,
+    this.onPopWithResult,
+  });
 
   final ExpenseFormViewModel viewModel;
+  final ValueChanged<ExpenseFormResult>? onPopWithResult;
 
   @override
   State<ExpenseFormScreen> createState() => _ExpenseFormScreenState();
@@ -135,6 +139,11 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
   late final TextEditingController _amountController;
   late final TextEditingController _noteController;
   final FocusNode _amountFocus = FocusNode();
+  final FocusNode _noteFocus = FocusNode();
+  final GlobalKey _amountKey = GlobalKey();
+  final GlobalKey _categoryKey = GlobalKey();
+  final GlobalKey _dateKey = GlobalKey();
+  final GlobalKey _noteKey = GlobalKey();
   final IdDateFormatter _dateFormatter = IdDateFormatter();
 
   @override
@@ -160,6 +169,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     _amountController.dispose();
     _noteController.dispose();
     _amountFocus.dispose();
+    _noteFocus.dispose();
     super.dispose();
   }
 
@@ -235,6 +245,87 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     }
   }
 
+  Future<void> _submit() async {
+    FocusScope.of(context).unfocus();
+    final result = await widget.viewModel.submit();
+    if (!mounted) return;
+
+    if (result == ExpenseFormResult.created ||
+        result == ExpenseFormResult.updated) {
+      widget.onPopWithResult?.call(result);
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop(result);
+      }
+      return;
+    }
+
+    final state = widget.viewModel.state;
+    if (state.fieldErrors.isNotEmpty) {
+      _scrollToFirstInvalidField(state.fieldErrors);
+      return;
+    }
+
+    if (state.submitFailure != null) {
+      final l10n = AppLocalizations.of(context)!;
+      final message = widget.viewModel.isEditing
+          ? l10n.expenseUpdateFailed
+          : l10n.expenseAddFailed;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
+    }
+  }
+
+  void _scrollToFirstInvalidField(Map<String, String> fieldErrors) {
+    if (fieldErrors.containsKey('amount')) {
+      _amountFocus.requestFocus();
+      _scrollToKey(_amountKey);
+    } else if (fieldErrors.containsKey('category')) {
+      FocusScope.of(context).unfocus();
+      _scrollToKey(_categoryKey);
+    } else if (fieldErrors.containsKey('transactionDate')) {
+      FocusScope.of(context).unfocus();
+      _scrollToKey(_dateKey);
+    } else if (fieldErrors.containsKey('note')) {
+      _noteFocus.requestFocus();
+      _scrollToKey(_noteKey);
+    }
+  }
+
+  void _scrollToKey(GlobalKey key) {
+    final targetContext = key.currentContext;
+    if (targetContext != null) {
+      Scrollable.ensureVisible(
+        targetContext,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
+  Future<bool?> _showDiscardChangesDialog(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return showDialog<bool>(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.discardChangesTitle),
+        content: Text(l10n.discardChangesMessage),
+        actions: [
+          TextButton(
+            key: const Key('discard_dialog_stay_button'),
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(l10n.discardChangesStayAction),
+          ),
+          TextButton(
+            key: const Key('discard_dialog_discard_button'),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(l10n.discardChangesDiscardAction),
+          ),
+        ],
+      ),
+    );
+  }
+
   String? _errorText(AppLocalizations l10n, String? key) {
     if (key == null) return null;
     return switch (key) {
@@ -259,75 +350,114 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     final title = widget.viewModel.isEditing
         ? l10n.editExpenseTitle
         : l10n.addExpenseTitle;
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSpacing.screenPadding),
-          child: ListenableBuilder(
-            listenable: widget.viewModel,
-            builder: (context, _) {
-              final state = widget.viewModel.state;
-              final amountError = _errorText(l10n, state.fieldErrors['amount']);
-              final categoryError = _errorText(
-                l10n,
-                state.fieldErrors['category'],
-              );
-              final dateError = _errorText(
-                l10n,
-                state.fieldErrors['transactionDate'],
-              );
-              final noteError = _errorText(l10n, state.fieldErrors['note']);
-              final formattedDate = _dateFormatter.formatForm(
-                state.selectedDate,
-              );
+    final submitActionText = widget.viewModel.isEditing
+        ? l10n.formSaveChangesAction
+        : l10n.formSaveAction;
 
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _AmountField(
-                    controller: _amountController,
-                    focusNode: _amountFocus,
-                    label: l10n.formAmountLabel,
-                    prefix: l10n.formAmountPrefix,
-                    errorText: amountError,
-                    enabled: !state.isSubmitting,
-                    onChanged: _onAmountChanged,
-                  ),
-                  const SizedBox(height: AppSpacing.fieldGap),
-                  _CategoryField(
-                    label: l10n.formCategoryLabel,
-                    placeholder: l10n.formCategoryPlaceholder,
-                    selectedCategory: state.selectedCategory,
-                    errorText: categoryError,
-                    enabled: !state.isSubmitting,
-                    onTap: () => _pickCategory(context),
-                  ),
-                  const SizedBox(height: AppSpacing.fieldGap),
-                  _DateField(
-                    label: l10n.formDateLabel,
-                    formattedDate: formattedDate,
-                    errorText: dateError,
-                    enabled: !state.isSubmitting,
-                    onTap: () => _pickDate(context),
-                  ),
-                  const SizedBox(height: AppSpacing.fieldGap),
-                  _NoteField(
-                    controller: _noteController,
-                    label: l10n.formNoteLabel,
-                    placeholder: l10n.formNotePlaceholder,
-                    errorText: noteError,
-                    enabled: !state.isSubmitting,
-                    onChanged: _onNoteChanged,
-                  ),
-                  const SizedBox(height: AppSpacing.fieldGap),
-                  // P3-008 — Submit button placeholder
-                ],
-              );
-            },
+    return ListenableBuilder(
+      listenable: widget.viewModel,
+      builder: (context, _) {
+        final state = widget.viewModel.state;
+        final amountError = _errorText(l10n, state.fieldErrors['amount']);
+        final categoryError = _errorText(l10n, state.fieldErrors['category']);
+        final dateError = _errorText(
+          l10n,
+          state.fieldErrors['transactionDate'],
+        );
+        final noteError = _errorText(l10n, state.fieldErrors['note']);
+        final formattedDate = _dateFormatter.formatForm(state.selectedDate);
+
+        return PopScope<ExpenseFormResult>(
+          canPop: !state.isSubmitting && !state.isDirty,
+          onPopInvokedWithResult: (didPop, result) async {
+            if (didPop) return;
+            if (widget.viewModel.state.isSubmitting) return;
+            if (widget.viewModel.state.isDirty) {
+              final shouldDiscard = await _showDiscardChangesDialog(context);
+              if (shouldDiscard == true && context.mounted) {
+                widget.onPopWithResult?.call(ExpenseFormResult.none);
+                if (Navigator.of(context).canPop()) {
+                  Navigator.of(context).pop(ExpenseFormResult.none);
+                }
+              }
+            }
+          },
+          child: Scaffold(
+            appBar: AppBar(
+              title: Text(title),
+              leading: BackButton(
+                onPressed: state.isSubmitting
+                    ? null
+                    : () => Navigator.maybePop(context),
+              ),
+            ),
+            body: SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(AppSpacing.screenPadding),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    KeyedSubtree(
+                      key: _amountKey,
+                      child: _AmountField(
+                        controller: _amountController,
+                        focusNode: _amountFocus,
+                        label: l10n.formAmountLabel,
+                        prefix: l10n.formAmountPrefix,
+                        errorText: amountError,
+                        enabled: !state.isSubmitting,
+                        onChanged: _onAmountChanged,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.fieldGap),
+                    KeyedSubtree(
+                      key: _categoryKey,
+                      child: _CategoryField(
+                        label: l10n.formCategoryLabel,
+                        placeholder: l10n.formCategoryPlaceholder,
+                        selectedCategory: state.selectedCategory,
+                        errorText: categoryError,
+                        enabled: !state.isSubmitting,
+                        onTap: () => _pickCategory(context),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.fieldGap),
+                    KeyedSubtree(
+                      key: _dateKey,
+                      child: _DateField(
+                        label: l10n.formDateLabel,
+                        formattedDate: formattedDate,
+                        errorText: dateError,
+                        enabled: !state.isSubmitting,
+                        onTap: () => _pickDate(context),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.fieldGap),
+                    KeyedSubtree(
+                      key: _noteKey,
+                      child: _NoteField(
+                        controller: _noteController,
+                        focusNode: _noteFocus,
+                        label: l10n.formNoteLabel,
+                        placeholder: l10n.formNotePlaceholder,
+                        errorText: noteError,
+                        enabled: !state.isSubmitting,
+                        onChanged: _onNoteChanged,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.fieldGap),
+                    _SubmitButton(
+                      text: submitActionText,
+                      isSubmitting: state.isSubmitting,
+                      onPressed: state.isSubmitting ? null : _submit,
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
@@ -469,10 +599,7 @@ class _DateField extends StatelessWidget {
           enabled: enabled,
           suffixIcon: const Icon(Icons.calendar_today_outlined),
         ),
-        child: Text(
-          formattedDate,
-          style: theme.textTheme.bodyLarge,
-        ),
+        child: Text(formattedDate, style: theme.textTheme.bodyLarge),
       ),
     );
   }
@@ -485,6 +612,7 @@ class _DateField extends StatelessWidget {
 class _NoteField extends StatelessWidget {
   const _NoteField({
     required this.controller,
+    required this.focusNode,
     required this.label,
     required this.placeholder,
     required this.onChanged,
@@ -493,6 +621,7 @@ class _NoteField extends StatelessWidget {
   });
 
   final TextEditingController controller;
+  final FocusNode focusNode;
   final String label;
   final String placeholder;
   final ValueChanged<String> onChanged;
@@ -508,6 +637,7 @@ class _NoteField extends StatelessWidget {
         return TextField(
           key: const Key('expense_form_note_field'),
           controller: controller,
+          focusNode: focusNode,
           enabled: enabled,
           keyboardType: TextInputType.multiline,
           textInputAction: TextInputAction.newline,
@@ -637,6 +767,65 @@ class _CategoryOptionTile extends StatelessWidget {
           : null,
       selected: isSelected,
       onTap: onTap,
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Private sub-widget: Submit button
+// ---------------------------------------------------------------------------
+
+class _SubmitButton extends StatelessWidget {
+  const _SubmitButton({
+    required this.text,
+    required this.isSubmitting,
+    required this.onPressed,
+  });
+
+  final String text;
+  final bool isSubmitting;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: AppSpacing.primaryButtonHeight,
+      child: FilledButton(
+        key: const Key('expense_form_submit_button'),
+        onPressed: onPressed,
+        style: isSubmitting
+            ? FilledButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: AppColors.onPrimary,
+                disabledBackgroundColor: AppColors.primary,
+                disabledForegroundColor: AppColors.onPrimary,
+              )
+            : null,
+        child: isSubmitting
+            ? Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.onPrimary,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Flexible(
+                    child: Text(
+                      text,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              )
+            : Text(text),
+      ),
     );
   }
 }

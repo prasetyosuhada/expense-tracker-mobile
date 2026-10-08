@@ -52,5 +52,13 @@
     }
   },
   "editAction": "Edit",
-  "deleteAction": "Hapus"
+  "deleteAction": "Hapus",
+  "discardChangesTitle": "Buang perubahan?",
+  "discardChangesMessage": "Perubahan yang belum disimpan akan hilang.",
+  "discardChangesStayAction": "Tetap di sini",
+  "discardChangesDiscardAction": "Buang",
+  "expenseAddedSuccess": "Pengeluaran berhasil ditambahkan",
+  "expenseUpdatedSuccess": "Pengeluaran berhasil diperbarui",
+  "expenseAddFailed": "Pengeluaran gagal disimpan. Coba lagi.",
+  "expenseUpdateFailed": "Perubahan gagal disimpan. Coba lagi."
 }
