@@ -76,6 +76,21 @@ class AppLocalizationsId extends AppLocalizations {
   String get categoryOther => 'Lainnya';
 
   @override
+  String get editExpenseTitle => 'Edit Pengeluaran';
+
+  @override
+  String get formSaveAction => 'Simpan';
+
+  @override
+  String get formSaveChangesAction => 'Simpan Perubahan';
+
+  @override
+  String get formAmountLabel => 'Nominal';
+
+  @override
+  String get formAmountPrefix => 'Rp';
+
+  @override
   String get formAmountRequired => 'Nominal wajib diisi';
 
   @override

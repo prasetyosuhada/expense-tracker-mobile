@@ -220,6 +220,36 @@ abstract class AppLocalizations {
   /// **'Lainnya'**
   String get categoryOther;
 
+  /// No description provided for @editExpenseTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Edit Pengeluaran'**
+  String get editExpenseTitle;
+
+  /// No description provided for @formSaveAction.
+  ///
+  /// In id, this message translates to:
+  /// **'Simpan'**
+  String get formSaveAction;
+
+  /// No description provided for @formSaveChangesAction.
+  ///
+  /// In id, this message translates to:
+  /// **'Simpan Perubahan'**
+  String get formSaveChangesAction;
+
+  /// No description provided for @formAmountLabel.
+  ///
+  /// In id, this message translates to:
+  /// **'Nominal'**
+  String get formAmountLabel;
+
+  /// No description provided for @formAmountPrefix.
+  ///
+  /// In id, this message translates to:
+  /// **'Rp'**
+  String get formAmountPrefix;
+
   /// No description provided for @formAmountRequired.
   ///
   /// In id, this message translates to:
