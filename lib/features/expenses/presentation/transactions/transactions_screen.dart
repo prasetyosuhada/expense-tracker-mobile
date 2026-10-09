@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:expensetracker/core/l10n/generated/app_localizations.dart';
 import 'package:expensetracker/core/theme/app_spacing.dart';
 import 'package:expensetracker/features/expenses/domain/expense.dart';
+import 'package:expensetracker/features/expenses/presentation/transactions/delete_expense_dialog.dart';
 import 'package:expensetracker/features/expenses/presentation/transactions/transactions_state.dart';
 import 'package:expensetracker/features/expenses/presentation/transactions/transactions_view_model.dart';
 import 'package:expensetracker/features/expenses/presentation/widgets/expense_list_item.dart';
@@ -122,6 +123,25 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
 
   void _retry() => unawaited(widget.viewModel.load());
 
+  Future<void> _handleDelete(Expense expense) async {
+    if (widget.onDeleteExpense != null) {
+      widget.onDeleteExpense!(expense);
+      return;
+    }
+    final result = await showDeleteExpenseDialog(
+      context: context,
+      expense: expense,
+      viewModel: widget.viewModel,
+    );
+    if (!mounted || result == null) return;
+    final l10n = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+    final message = result
+        ? l10n.expenseDeletedSuccess
+        : l10n.expenseDeleteFailed;
+    messenger.showSnackBar(SnackBar(content: Text(message)));
+  }
+
   Widget _buildContent(List<Expense> expenses) {
     if (expenses.isEmpty) {
       return _buildEmpty();
@@ -167,9 +187,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
           onEdit: widget.onEditExpense != null
               ? () => widget.onEditExpense!(expense)
               : null,
-          onDelete: widget.onDeleteExpense != null
-              ? () => widget.onDeleteExpense!(expense)
-              : null,
+          onDelete: () => _handleDelete(expense),
         );
         if (index == expenses.length - 1) {
           return item;

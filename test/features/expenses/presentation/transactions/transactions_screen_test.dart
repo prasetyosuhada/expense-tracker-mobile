@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:expensetracker/core/errors/app_failure.dart';
 import 'package:expensetracker/core/l10n/generated/app_localizations.dart';
+import 'package:expensetracker/core/theme/app_colors.dart';
 import 'package:expensetracker/core/theme/app_spacing.dart';
 import 'package:expensetracker/core/theme/app_theme.dart';
 import 'package:expensetracker/features/expenses/domain/expense.dart';
@@ -15,6 +16,7 @@ import 'package:expensetracker/features/expenses/domain/expense_draft.dart';
 import 'package:expensetracker/features/expenses/domain/expense_month.dart';
 import 'package:expensetracker/features/expenses/domain/expense_repository.dart';
 import 'package:expensetracker/features/expenses/domain/home_summary.dart';
+import 'package:expensetracker/features/expenses/presentation/transactions/delete_expense_dialog.dart';
 import 'package:expensetracker/features/expenses/presentation/transactions/transactions_screen.dart';
 import 'package:expensetracker/features/expenses/presentation/transactions/transactions_state.dart';
 import 'package:expensetracker/features/expenses/presentation/transactions/transactions_view_model.dart';
@@ -354,7 +356,7 @@ void main() {
   );
 
   testWidgets(
-    'item callbacks: tap triggers onTapExpense, popup menu triggers edit and delete',
+    'item callbacks: tap triggers onTapExpense, popup menu triggers edit and custom delete',
     (tester) async {
       final created = await fake.create(
         ExpenseDraft(
@@ -367,7 +369,7 @@ void main() {
 
       Expense? tappedExpense;
       Expense? editedExpense;
-      Expense? deletedExpense;
+      Expense? customDeletedExpense;
 
       final model = createModel(fake);
       await pumpTransactions(
@@ -375,7 +377,7 @@ void main() {
         model,
         onTapExpense: (e) => tappedExpense = e,
         onEditExpense: (e) => editedExpense = e,
-        onDeleteExpense: (e) => deletedExpense = e,
+        onDeleteExpense: (e) => customDeletedExpense = e,
       );
       await tester.pumpAndSettle();
 
@@ -390,14 +392,248 @@ void main() {
       await tester.pumpAndSettle();
       expect(editedExpense?.id, created.id);
 
-      // Open popup menu and select Delete
+      // Open popup menu and select Delete with custom handler
       await tester.tap(find.byIcon(Icons.more_vert));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Hapus'));
       await tester.pumpAndSettle();
-      expect(deletedExpense?.id, created.id);
+      expect(customDeletedExpense?.id, created.id);
+      expect(find.byType(DeleteExpenseDialog), findsNothing);
     },
   );
+
+  group('P3-010 delete confirmation dialog', () {
+    testWidgets(
+      'tap Hapus opens confirmation dialog with expected styling and texts',
+      (tester) async {
+        await fake.create(
+          ExpenseDraft(
+            amount: 25000,
+            category: ExpenseCategory.food,
+            transactionDate: ExpenseDate(2026, 10, 1),
+            note: 'Makan siang',
+          ),
+        );
+
+        final model = createModel(fake);
+        await pumpTransactions(tester, model);
+        await tester.pumpAndSettle();
+
+        // Tap action menu -> Hapus
+        await tester.tap(find.byIcon(Icons.more_vert));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Hapus'));
+        await tester.pumpAndSettle();
+
+        // Verify dialog rendered
+        expect(find.byType(DeleteExpenseDialog), findsOneWidget);
+        expect(find.text('Hapus pengeluaran?'), findsOneWidget);
+        expect(
+          find.text('Pengeluaran ini akan dihapus secara permanen.'),
+          findsOneWidget,
+        );
+
+        // Verify buttons
+        final cancelButton = find.widgetWithText(TextButton, 'Batal');
+        final deleteButton = find.widgetWithText(FilledButton, 'Hapus');
+        expect(cancelButton, findsOneWidget);
+        expect(deleteButton, findsOneWidget);
+
+        // Verify destructive styling on Hapus button
+        final filledButton = tester.widget<FilledButton>(deleteButton);
+        expect(
+          filledButton.style?.backgroundColor?.resolve(<WidgetState>{}),
+          AppColors.danger,
+        );
+        expect(
+          filledButton.style?.foregroundColor?.resolve(<WidgetState>{}),
+          AppColors.surface,
+        );
+
+        // Verify initial autofocus is on Batal, NOT Hapus
+        final textButton = tester.widget<TextButton>(cancelButton);
+        expect(textButton.autofocus, isTrue);
+      },
+    );
+
+    testWidgets(
+      'tap Batal closes dialog without deleting data or showing snackbar',
+      (tester) async {
+        await fake.create(
+          ExpenseDraft(
+            amount: 25000,
+            category: ExpenseCategory.food,
+            transactionDate: ExpenseDate(2026, 10, 1),
+            note: null,
+          ),
+        );
+
+        final controlled = _ControlledTransactionsRepository(fake);
+        final model = createModel(controlled);
+        await pumpTransactions(tester, model);
+        await tester.pumpAndSettle();
+
+        // Open dialog
+        await tester.tap(find.byIcon(Icons.more_vert));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Hapus'));
+        await tester.pumpAndSettle();
+
+        // Tap Batal
+        await tester.tap(find.widgetWithText(TextButton, 'Batal'));
+        await tester.pumpAndSettle();
+
+        // Dialog closed
+        expect(find.byType(DeleteExpenseDialog), findsNothing);
+        expect(find.byType(ExpenseListItem), findsOneWidget);
+        expect(find.byType(SnackBar), findsNothing);
+        expect(controlled.deleteCalls, isEmpty);
+      },
+    );
+
+    testWidgets('tap outside barrier dismisses dialog without deleting', (
+      tester,
+    ) async {
+      await fake.create(
+        ExpenseDraft(
+          amount: 25000,
+          category: ExpenseCategory.food,
+          transactionDate: ExpenseDate(2026, 10, 1),
+          note: null,
+        ),
+      );
+
+      final controlled = _ControlledTransactionsRepository(fake);
+      final model = createModel(controlled);
+      await pumpTransactions(tester, model);
+      await tester.pumpAndSettle();
+
+      // Open dialog
+      await tester.tap(find.byIcon(Icons.more_vert));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Hapus'));
+      await tester.pumpAndSettle();
+
+      // Tap outside dialog near top-left corner
+      await tester.tapAt(const Offset(10, 10));
+      await tester.pumpAndSettle();
+
+      // Dialog closed, no delete executed
+      expect(find.byType(DeleteExpenseDialog), findsNothing);
+      expect(find.byType(ExpenseListItem), findsOneWidget);
+      expect(controlled.deleteCalls, isEmpty);
+      expect(find.byType(SnackBar), findsNothing);
+    });
+
+    testWidgets(
+      'confirming delete shows progress indicator, disables buttons, deletes data, and shows snackbar',
+      (tester) async {
+        final created = await fake.create(
+          ExpenseDraft(
+            amount: 25000,
+            category: ExpenseCategory.food,
+            transactionDate: ExpenseDate(2026, 10, 1),
+            note: 'Makan siang',
+          ),
+        );
+
+        final controlled = _ControlledTransactionsRepository(fake)
+          ..delayDeletes = true;
+        final model = createModel(controlled);
+        await pumpTransactions(tester, model);
+        await tester.pumpAndSettle();
+
+        // Open dialog
+        await tester.tap(find.byIcon(Icons.more_vert));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Hapus'));
+        await tester.pumpAndSettle();
+
+        // Tap Hapus button in dialog
+        final confirmButton = find.byKey(
+          const Key('delete_dialog_confirm_button'),
+        );
+        await tester.tap(confirmButton);
+        await tester.pump();
+
+        // While deleting: spinner is visible, buttons disabled
+        expect(
+          find.descendant(
+            of: confirmButton,
+            matching: find.byType(CircularProgressIndicator),
+          ),
+          findsOneWidget,
+        );
+        final deleteWidget = tester.widget<FilledButton>(confirmButton);
+        final cancelWidget = tester.widget<TextButton>(
+          find.byKey(const Key('delete_dialog_cancel_button')),
+        );
+        expect(deleteWidget.onPressed, isNull);
+        expect(cancelWidget.onPressed, isNull);
+
+        // Back route should be blocked while deleting
+        await tester.binding.handlePopRoute();
+        await tester.pump();
+        expect(find.byType(DeleteExpenseDialog), findsOneWidget);
+
+        // Complete the delete operation
+        controlled.pendingDeletes.single.complete();
+        await tester.pumpAndSettle();
+
+        // Dialog closes, snackbar shown
+        expect(find.byType(DeleteExpenseDialog), findsNothing);
+        expect(find.text('Pengeluaran berhasil dihapus'), findsOneWidget);
+
+        // Item is deleted
+        expect(controlled.deleteCalls, <int>[created.id]);
+        expect(find.byType(ExpenseListItem), findsNothing);
+        expect(find.text('Belum ada transaksi'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'failed delete closes dialog, retains data, and shows failure snackbar',
+      (tester) async {
+        final created = await fake.create(
+          ExpenseDraft(
+            amount: 25000,
+            category: ExpenseCategory.food,
+            transactionDate: ExpenseDate(2026, 10, 1),
+            note: null,
+          ),
+        );
+
+        final controlled = _ControlledTransactionsRepository(fake)
+          ..deleteError = const StorageFailure('disk full');
+        final model = createModel(controlled);
+        await pumpTransactions(tester, model);
+        await tester.pumpAndSettle();
+
+        // Open dialog
+        await tester.tap(find.byIcon(Icons.more_vert));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Hapus'));
+        await tester.pumpAndSettle();
+
+        // Tap Hapus
+        await tester.tap(find.byKey(const Key('delete_dialog_confirm_button')));
+        await tester.pumpAndSettle();
+
+        // Dialog closes
+        expect(find.byType(DeleteExpenseDialog), findsNothing);
+
+        // Failure snackbar displayed
+        expect(
+          find.text('Pengeluaran gagal dihapus. Coba lagi.'),
+          findsOneWidget,
+        );
+
+        // Transaction item is still visible
+        expect(controlled.deleteCalls, <int>[created.id]);
+        expect(find.byType(ExpenseListItem), findsOneWidget);
+      },
+    );
+  });
 }
 
 final class _ControlledTransactionsRepository implements ExpenseRepository {
@@ -406,8 +642,12 @@ final class _ControlledTransactionsRepository implements ExpenseRepository {
   final FakeExpenseRepository delegate;
   final List<Completer<List<Expense>>> pendingReads =
       <Completer<List<Expense>>>[];
+  final List<Completer<void>> pendingDeletes = <Completer<void>>[];
+  final List<int> deleteCalls = <int>[];
   bool delayReads = false;
+  bool delayDeletes = false;
   Object? readError;
+  Object? deleteError;
 
   @override
   Stream<ExpenseChange> get changes => delegate.changes;
@@ -423,7 +663,17 @@ final class _ControlledTransactionsRepository implements ExpenseRepository {
   }
 
   @override
-  Future<void> delete(int id) => delegate.delete(id);
+  Future<void> delete(int id) async {
+    deleteCalls.add(id);
+    final error = deleteError;
+    if (error != null) throw error;
+    if (delayDeletes) {
+      final completer = Completer<void>();
+      pendingDeletes.add(completer);
+      await completer.future;
+    }
+    await delegate.delete(id);
+  }
 
   @override
   Future<HomeSummary> getHomeSummary({

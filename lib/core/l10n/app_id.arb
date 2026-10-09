@@ -57,12 +57,17 @@
   },
   "editAction": "Edit",
   "deleteAction": "Hapus",
+  "cancelAction": "Batal",
+  "deleteDialogTitle": "Hapus pengeluaran?",
+  "deleteDialogMessage": "Pengeluaran ini akan dihapus secara permanen.",
   "discardChangesTitle": "Buang perubahan?",
   "discardChangesMessage": "Perubahan yang belum disimpan akan hilang.",
   "discardChangesStayAction": "Tetap di sini",
   "discardChangesDiscardAction": "Buang",
   "expenseAddedSuccess": "Pengeluaran berhasil ditambahkan",
   "expenseUpdatedSuccess": "Pengeluaran berhasil diperbarui",
+  "expenseDeletedSuccess": "Pengeluaran berhasil dihapus",
   "expenseAddFailed": "Pengeluaran gagal disimpan. Coba lagi.",
-  "expenseUpdateFailed": "Perubahan gagal disimpan. Coba lagi."
+  "expenseUpdateFailed": "Perubahan gagal disimpan. Coba lagi.",
+  "expenseDeleteFailed": "Pengeluaran gagal dihapus. Coba lagi."
 }

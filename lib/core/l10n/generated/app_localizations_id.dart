@@ -155,6 +155,16 @@ class AppLocalizationsId extends AppLocalizations {
   String get deleteAction => 'Hapus';
 
   @override
+  String get cancelAction => 'Batal';
+
+  @override
+  String get deleteDialogTitle => 'Hapus pengeluaran?';
+
+  @override
+  String get deleteDialogMessage =>
+      'Pengeluaran ini akan dihapus secara permanen.';
+
+  @override
   String get discardChangesTitle => 'Buang perubahan?';
 
   @override
@@ -174,8 +184,14 @@ class AppLocalizationsId extends AppLocalizations {
   String get expenseUpdatedSuccess => 'Pengeluaran berhasil diperbarui';
 
   @override
+  String get expenseDeletedSuccess => 'Pengeluaran berhasil dihapus';
+
+  @override
   String get expenseAddFailed => 'Pengeluaran gagal disimpan. Coba lagi.';
 
   @override
   String get expenseUpdateFailed => 'Perubahan gagal disimpan. Coba lagi.';
+
+  @override
+  String get expenseDeleteFailed => 'Pengeluaran gagal dihapus. Coba lagi.';
 }

@@ -370,6 +370,24 @@ abstract class AppLocalizations {
   /// **'Hapus'**
   String get deleteAction;
 
+  /// No description provided for @cancelAction.
+  ///
+  /// In id, this message translates to:
+  /// **'Batal'**
+  String get cancelAction;
+
+  /// No description provided for @deleteDialogTitle.
+  ///
+  /// In id, this message translates to:
+  /// **'Hapus pengeluaran?'**
+  String get deleteDialogTitle;
+
+  /// No description provided for @deleteDialogMessage.
+  ///
+  /// In id, this message translates to:
+  /// **'Pengeluaran ini akan dihapus secara permanen.'**
+  String get deleteDialogMessage;
+
   /// No description provided for @discardChangesTitle.
   ///
   /// In id, this message translates to:
@@ -406,6 +424,12 @@ abstract class AppLocalizations {
   /// **'Pengeluaran berhasil diperbarui'**
   String get expenseUpdatedSuccess;
 
+  /// No description provided for @expenseDeletedSuccess.
+  ///
+  /// In id, this message translates to:
+  /// **'Pengeluaran berhasil dihapus'**
+  String get expenseDeletedSuccess;
+
   /// No description provided for @expenseAddFailed.
   ///
   /// In id, this message translates to:
@@ -417,6 +441,12 @@ abstract class AppLocalizations {
   /// In id, this message translates to:
   /// **'Perubahan gagal disimpan. Coba lagi.'**
   String get expenseUpdateFailed;
+
+  /// No description provided for @expenseDeleteFailed.
+  ///
+  /// In id, this message translates to:
+  /// **'Pengeluaran gagal dihapus. Coba lagi.'**
+  String get expenseDeleteFailed;
 }
 
 class _AppLocalizationsDelegate
