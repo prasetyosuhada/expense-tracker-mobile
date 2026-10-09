@@ -20,6 +20,7 @@ import 'package:expensetracker/features/expenses/presentation/home/home_state.da
 import 'package:expensetracker/features/expenses/presentation/home/home_view_model.dart';
 import 'package:expensetracker/features/expenses/presentation/transactions/transactions_state.dart';
 import 'package:expensetracker/features/expenses/presentation/transactions/transactions_view_model.dart';
+import 'package:expensetracker/features/expenses/presentation/widgets/expense_list_item.dart';
 
 import '../helpers/fake_app_clock.dart';
 import '../helpers/fake_expense_repository.dart';
@@ -431,6 +432,280 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  group('P3-011 edit expense flow end-to-end', () {
+    testWidgets(
+      'tapping item on Transactions opens edit route with all fields pre-populated',
+      (tester) async {
+        await repository.create(
+          ExpenseDraft(
+            amount: 75000,
+            category: ExpenseCategory.transportation,
+            transactionDate: ExpenseDate(2026, 10, 2),
+            note: 'Bensin motor',
+          ),
+        );
+
+        await _pumpShell(
+          tester,
+          AppShell(clock: clock, repository: repository),
+        );
+        await _selectTransactions(tester);
+
+        expect(find.byType(ExpenseListItem), findsOneWidget);
+        await tester.tap(find.byType(ExpenseListItem));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Edit Pengeluaran'), findsOneWidget);
+        expect(find.text('Simpan Perubahan'), findsOneWidget);
+        expect(find.text('75.000'), findsOneWidget);
+        expect(find.text('Transportasi'), findsOneWidget);
+        expect(find.text('2 Oktober 2026'), findsOneWidget);
+        expect(find.text('Bensin motor'), findsOneWidget);
+
+        await tester.tap(find.byType(BackButton));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Edit Pengeluaran'), findsNothing);
+        expect(_selectedIndex(tester), 1);
+        await tester.pumpWidget(const SizedBox.shrink());
+      },
+    );
+
+    testWidgets(
+      'selecting Edit from popup menu opens edit route with pre-populated values',
+      (tester) async {
+        await repository.create(
+          ExpenseDraft(
+            amount: 120000,
+            category: ExpenseCategory.shopping,
+            transactionDate: ExpenseDate(2026, 10, 2),
+            note: 'Baju baru',
+          ),
+        );
+
+        await _pumpShell(
+          tester,
+          AppShell(clock: clock, repository: repository),
+        );
+        await _selectTransactions(tester);
+
+        await tester.tap(find.byIcon(Icons.more_vert));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Edit'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Edit Pengeluaran'), findsOneWidget);
+        expect(find.text('Simpan Perubahan'), findsOneWidget);
+        expect(find.text('120.000'), findsOneWidget);
+        expect(find.text('Belanja'), findsOneWidget);
+        expect(find.text('Baju baru'), findsOneWidget);
+
+        await tester.tap(find.byType(BackButton));
+        await tester.pumpAndSettle();
+        await tester.pumpWidget(const SizedBox.shrink());
+      },
+    );
+
+    testWidgets(
+      'edit nominal -> save -> shows success snackbar and updates Transactions and Home',
+      (tester) async {
+        await repository.create(
+          ExpenseDraft(
+            amount: 25000,
+            category: ExpenseCategory.food,
+            transactionDate: ExpenseDate(2026, 10, 2),
+            note: 'Makan siang',
+          ),
+        );
+
+        await _pumpShell(
+          tester,
+          AppShell(clock: clock, repository: repository),
+        );
+
+        expect(find.text('Rp25.000'), findsWidgets);
+
+        await _selectTransactions(tester);
+        await tester.tap(find.byType(ExpenseListItem));
+        await tester.pumpAndSettle();
+
+        final textField = find.byType(TextField).first;
+        await tester.enterText(textField, '50000');
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Simpan Perubahan'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Edit Pengeluaran'), findsNothing);
+        expect(find.text('Pengeluaran berhasil diperbarui'), findsOneWidget);
+        expect(find.text('Rp50.000'), findsOneWidget);
+
+        await _selectHome(tester);
+        expect(find.text('Rp50.000'), findsWidgets);
+        await tester.pumpWidget(const SizedBox.shrink());
+      },
+    );
+
+    testWidgets('edit date to another month -> updates Home monthly total', (
+      tester,
+    ) async {
+      await repository.create(
+        ExpenseDraft(
+          amount: 40000,
+          category: ExpenseCategory.bills,
+          transactionDate: ExpenseDate(2026, 10, 2),
+          note: 'Listrik',
+        ),
+      );
+
+      await _pumpShell(
+        tester,
+        AppShell(
+          clock: clock,
+          repository: repository,
+          editExpenseBuilder: (context, model) {
+            return Scaffold(
+              appBar: AppBar(title: const Text('Custom Edit')),
+              body: ElevatedButton(
+                onPressed: () async {
+                  model.updateDate(ExpenseDate(2026, 11, 15));
+                  final result = await model.submit();
+                  if (context.mounted) Navigator.of(context).pop(result);
+                },
+                child: const Text('Simpan Tanggal Baru'),
+              ),
+            );
+          },
+        ),
+      );
+
+      expect(find.text('Rp40.000'), findsWidgets);
+
+      await _selectTransactions(tester);
+      await tester.tap(find.byType(ExpenseListItem));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Custom Edit'), findsOneWidget);
+      await tester.tap(find.text('Simpan Tanggal Baru'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Pengeluaran berhasil diperbarui'), findsOneWidget);
+
+      await _selectHome(tester);
+      expect(find.text('Rp0'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('repeated item taps push only one edit route', (tester) async {
+      await repository.create(
+        ExpenseDraft(
+          amount: 25000,
+          category: ExpenseCategory.food,
+          transactionDate: ExpenseDate(2026, 10, 2),
+          note: null,
+        ),
+      );
+
+      final forms = <ExpenseFormViewModel>{};
+      await _pumpShell(
+        tester,
+        AppShell(
+          clock: clock,
+          repository: repository,
+          editExpenseBuilder: (context, model) {
+            forms.add(model);
+            return Scaffold(appBar: AppBar(title: const Text('edit fixture')));
+          },
+        ),
+      );
+      await _selectTransactions(tester);
+
+      final item = find.byType(ExpenseListItem);
+      await tester.tap(item);
+      await tester.tap(item, warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(forms.length, 1);
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
+      expect(find.byType(NavigationBar), findsOneWidget);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('discard changes dialog when edit form is dirty', (
+      tester,
+    ) async {
+      await repository.create(
+        ExpenseDraft(
+          amount: 25000,
+          category: ExpenseCategory.food,
+          transactionDate: ExpenseDate(2026, 10, 2),
+          note: null,
+        ),
+      );
+
+      await _pumpShell(tester, AppShell(clock: clock, repository: repository));
+      await _selectTransactions(tester);
+      await tester.tap(find.byType(ExpenseListItem));
+      await tester.pumpAndSettle();
+
+      final textFields = find.byType(TextField);
+      await tester.enterText(textFields.last, 'Catatan baru');
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Buang perubahan?'), findsOneWidget);
+
+      await tester.tap(find.text('Tetap di sini'));
+      await tester.pumpAndSettle();
+      expect(find.text('Edit Pengeluaran'), findsOneWidget);
+
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Buang'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Edit Pengeluaran'), findsNothing);
+      expect(find.text('Pengeluaran berhasil diperbarui'), findsNothing);
+      final all = await repository.getAll();
+      expect(all.first.note, isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+
+    testWidgets('failed update keeps form open and shows error snackbar', (
+      tester,
+    ) async {
+      await repository.create(
+        ExpenseDraft(
+          amount: 25000,
+          category: ExpenseCategory.food,
+          transactionDate: ExpenseDate(2026, 10, 2),
+          note: null,
+        ),
+      );
+
+      repository.updateFailure = const StorageFailure(null);
+
+      await _pumpShell(tester, AppShell(clock: clock, repository: repository));
+      await _selectTransactions(tester);
+      await tester.tap(find.byType(ExpenseListItem));
+      await tester.pumpAndSettle();
+
+      final textField = find.byType(TextField).first;
+      await tester.enterText(textField, '30000');
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Simpan Perubahan'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Edit Pengeluaran'), findsOneWidget);
+      expect(find.text('Perubahan gagal disimpan. Coba lagi.'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox.shrink());
+    });
+  });
 }
 
 Future<void> _pumpShell(WidgetTester tester, AppShell shell) async {

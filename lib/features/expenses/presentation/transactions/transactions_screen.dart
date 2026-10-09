@@ -123,6 +123,22 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
 
   void _retry() => unawaited(widget.viewModel.load());
 
+  void _handleTap(Expense expense) {
+    if (widget.onTapExpense != null) {
+      widget.onTapExpense!(expense);
+    } else if (widget.onEditExpense != null) {
+      widget.onEditExpense!(expense);
+    }
+  }
+
+  void _handleEdit(Expense expense) {
+    if (widget.onEditExpense != null) {
+      widget.onEditExpense!(expense);
+    } else if (widget.onTapExpense != null) {
+      widget.onTapExpense!(expense);
+    }
+  }
+
   Future<void> _handleDelete(Expense expense) async {
     if (widget.onDeleteExpense != null) {
       widget.onDeleteExpense!(expense);
@@ -181,11 +197,11 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         final item = ExpenseListItem(
           key: ValueKey(expense.id),
           expense: expense,
-          onTap: widget.onTapExpense != null
-              ? () => widget.onTapExpense!(expense)
+          onTap: (widget.onTapExpense != null || widget.onEditExpense != null)
+              ? () => _handleTap(expense)
               : null,
-          onEdit: widget.onEditExpense != null
-              ? () => widget.onEditExpense!(expense)
+          onEdit: (widget.onEditExpense != null || widget.onTapExpense != null)
+              ? () => _handleEdit(expense)
               : null,
           onDelete: () => _handleDelete(expense),
         );

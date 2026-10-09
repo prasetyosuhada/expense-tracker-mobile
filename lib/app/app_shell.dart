@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:expensetracker/core/clock/app_clock.dart';
 import 'package:expensetracker/core/l10n/generated/app_localizations.dart';
 import 'package:expensetracker/core/theme/app_shapes.dart';
+import 'package:expensetracker/features/expenses/domain/expense.dart';
 import 'package:expensetracker/features/expenses/domain/expense_repository.dart';
 import 'package:expensetracker/features/expenses/presentation/expense_form/expense_form_screen.dart';
 import 'package:expensetracker/features/expenses/presentation/expense_form/expense_form_state.dart';
@@ -26,6 +27,10 @@ typedef AddExpenseBuilder = Widget Function(
   BuildContext context,
   ExpenseFormViewModel viewModel,
 );
+typedef EditExpenseBuilder = Widget Function(
+  BuildContext context,
+  ExpenseFormViewModel viewModel,
+);
 
 /// Owns the two persistent destinations and opens add mode above either tab.
 class AppShell extends StatefulWidget {
@@ -36,6 +41,7 @@ class AppShell extends StatefulWidget {
     this.homeBuilder,
     this.transactionsBuilder,
     this.addExpenseBuilder,
+    this.editExpenseBuilder,
   });
 
   final AppClock clock;
@@ -45,6 +51,7 @@ class AppShell extends StatefulWidget {
   final HomeDestinationBuilder? homeBuilder;
   final TransactionsDestinationBuilder? transactionsBuilder;
   final AddExpenseBuilder? addExpenseBuilder;
+  final EditExpenseBuilder? editExpenseBuilder;
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -141,6 +148,38 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
     }
   }
 
+  Future<void> _openEditExpense(Expense expense) async {
+    if (_isFormOpen) return;
+    _isFormOpen = true;
+    try {
+      final result = await Navigator.of(context).push<ExpenseFormResult>(
+        MaterialPageRoute<ExpenseFormResult>(
+          builder: (context) => _EditExpenseRoute(
+            clock: widget.clock,
+            repository: widget.repository,
+            expense: expense,
+            builder: widget.editExpenseBuilder,
+          ),
+        ),
+      );
+      if (!mounted || result == null || result == ExpenseFormResult.none) {
+        return;
+      }
+      final messenger = ScaffoldMessenger.of(context);
+      final l10n = AppLocalizations.of(context)!;
+      final message = switch (result) {
+        ExpenseFormResult.created => l10n.expenseAddedSuccess,
+        ExpenseFormResult.updated => l10n.expenseUpdatedSuccess,
+        ExpenseFormResult.none => null,
+      };
+      if (message != null) {
+        messenger.showSnackBar(SnackBar(content: Text(message)));
+      }
+    } finally {
+      _isFormOpen = false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -169,6 +208,8 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
                   TransactionsScreen(
                     viewModel: _transactionsViewModel,
                     onAddExpense: _openAddExpense,
+                    onTapExpense: _openEditExpense,
+                    onEditExpense: _openEditExpense,
                     isActive: _selectedIndex == 1,
                   ),
             ],
@@ -240,6 +281,49 @@ class _AddExpenseRouteState extends State<_AddExpenseRoute> {
   void initState() {
     super.initState();
     _viewModel = ExpenseFormViewModel(widget.repository, widget.clock);
+  }
+
+  @override
+  void dispose() {
+    _viewModel.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.builder?.call(context, _viewModel) ??
+        ExpenseFormScreen(viewModel: _viewModel);
+  }
+}
+
+class _EditExpenseRoute extends StatefulWidget {
+  const _EditExpenseRoute({
+    required this.clock,
+    required this.repository,
+    required this.expense,
+    required this.builder,
+  });
+
+  final AppClock clock;
+  final ExpenseRepository repository;
+  final Expense expense;
+  final EditExpenseBuilder? builder;
+
+  @override
+  State<_EditExpenseRoute> createState() => _EditExpenseRouteState();
+}
+
+class _EditExpenseRouteState extends State<_EditExpenseRoute> {
+  late final ExpenseFormViewModel _viewModel;
+
+  @override
+  void initState() {
+    super.initState();
+    _viewModel = ExpenseFormViewModel(
+      widget.repository,
+      widget.clock,
+      expense: widget.expense,
+    );
   }
 
   @override

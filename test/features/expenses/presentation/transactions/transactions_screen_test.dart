@@ -402,6 +402,49 @@ void main() {
     },
   );
 
+  testWidgets(
+    'item callbacks fallback: tapping item uses onEditExpense if onTapExpense is null, and menu Edit uses onTapExpense if onEditExpense is null',
+    (tester) async {
+      final created = await fake.create(
+        ExpenseDraft(
+          amount: 25000,
+          category: ExpenseCategory.food,
+          transactionDate: ExpenseDate(2026, 10, 1),
+          note: null,
+        ),
+      );
+
+      Expense? editedOnlyExpense;
+      final model1 = createModel(fake);
+      await pumpTransactions(
+        tester,
+        model1,
+        onEditExpense: (e) => editedOnlyExpense = e,
+      );
+      await tester.pumpAndSettle();
+
+      // Tap card directly -> falls back to onEditExpense
+      await tester.tap(find.byType(ExpenseListItem));
+      expect(editedOnlyExpense?.id, created.id);
+
+      Expense? tappedOnlyExpense;
+      final model2 = createModel(fake);
+      await pumpTransactions(
+        tester,
+        model2,
+        onTapExpense: (e) => tappedOnlyExpense = e,
+      );
+      await tester.pumpAndSettle();
+
+      // Open popup menu and select Edit -> falls back to onTapExpense
+      await tester.tap(find.byIcon(Icons.more_vert));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Edit'));
+      await tester.pumpAndSettle();
+      expect(tappedOnlyExpense?.id, created.id);
+    },
+  );
+
   group('P3-010 delete confirmation dialog', () {
     testWidgets(
       'tap Hapus opens confirmation dialog with expected styling and texts',
