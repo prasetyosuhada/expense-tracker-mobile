@@ -114,7 +114,10 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       final l10n = AppLocalizations.of(context)!;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(l10n.transactionsRefreshFailure),
+          content: Semantics(
+            liveRegion: true,
+            child: Text(l10n.transactionsRefreshFailure),
+          ),
           action: SnackBarAction(label: l10n.retryAction, onPressed: _retry),
         ),
       );
@@ -155,7 +158,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     final message = result
         ? l10n.expenseDeletedSuccess
         : l10n.expenseDeleteFailed;
-    messenger.showSnackBar(SnackBar(content: Text(message)));
+    messenger.showSnackBar(
+      SnackBar(content: Semantics(liveRegion: true, child: Text(message))),
+    );
   }
 
   Widget _buildContent(List<Expense> expenses) {

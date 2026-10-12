@@ -197,53 +197,61 @@ class ExpenseListItem extends StatelessWidget {
                 child: Semantics(
                   button: true,
                   label: semanticMenuLabel,
-                  child: PopupMenuButton<ExpenseListItemAction>(
-                    tooltip: semanticMenuLabel,
-                    padding: EdgeInsets.zero,
-                    icon: const Icon(Icons.more_vert),
-                    iconSize: AppSpacing.iconSize,
-                    onSelected: (action) {
-                      switch (action) {
-                        case ExpenseListItemAction.edit:
-                          onEdit?.call();
-                        case ExpenseListItemAction.delete:
-                          onDelete?.call();
-                      }
-                    },
-                    itemBuilder: (context) => [
-                      PopupMenuItem<ExpenseListItemAction>(
-                        value: ExpenseListItemAction.edit,
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.edit_outlined,
-                              size: AppSpacing.iconSize,
-                            ),
-                            const SizedBox(width: AppSpacing.sm),
-                            Text(l10n.editAction),
-                          ],
-                        ),
-                      ),
-                      PopupMenuItem<ExpenseListItemAction>(
-                        value: ExpenseListItemAction.delete,
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.delete_outline,
-                              color: AppColors.danger,
-                              size: AppSpacing.iconSize,
-                            ),
-                            const SizedBox(width: AppSpacing.sm),
-                            Text(
-                              l10n.deleteAction,
-                              style: theme.textTheme.bodyLarge?.copyWith(
-                                color: AppColors.danger,
+                  child: SizedBox(
+                    width: AppSpacing.touchTarget,
+                    height: AppSpacing.touchTarget,
+                    child: PopupMenuButton<ExpenseListItemAction>(
+                      tooltip: semanticMenuLabel,
+                      padding: EdgeInsets.zero,
+                      icon: const Icon(Icons.more_vert),
+                      iconSize: AppSpacing.iconSize,
+                      onSelected: (action) {
+                        switch (action) {
+                          case ExpenseListItemAction.edit:
+                            onEdit?.call();
+                          case ExpenseListItemAction.delete:
+                            onDelete?.call();
+                        }
+                      },
+                      itemBuilder: (context) => [
+                        PopupMenuItem<ExpenseListItemAction>(
+                          value: ExpenseListItemAction.edit,
+                          child: Row(
+                            children: [
+                              const ExcludeSemantics(
+                                child: Icon(
+                                  Icons.edit_outlined,
+                                  size: AppSpacing.iconSize,
+                                ),
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: AppSpacing.sm),
+                              Text(l10n.editAction),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                        PopupMenuItem<ExpenseListItemAction>(
+                          value: ExpenseListItemAction.delete,
+                          child: Row(
+                            children: [
+                              const ExcludeSemantics(
+                                child: Icon(
+                                  Icons.delete_outline,
+                                  color: AppColors.danger,
+                                  size: AppSpacing.iconSize,
+                                ),
+                              ),
+                              const SizedBox(width: AppSpacing.sm),
+                              Text(
+                                l10n.deleteAction,
+                                style: theme.textTheme.bodyLarge?.copyWith(
+                                  color: AppColors.danger,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

@@ -141,7 +141,9 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
         ExpenseFormResult.none => null,
       };
       if (message != null) {
-        messenger.showSnackBar(SnackBar(content: Text(message)));
+        messenger.showSnackBar(
+          SnackBar(content: Semantics(liveRegion: true, child: Text(message))),
+        );
       }
     } finally {
       _isFormOpen = false;
@@ -173,7 +175,9 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
         ExpenseFormResult.none => null,
       };
       if (message != null) {
-        messenger.showSnackBar(SnackBar(content: Text(message)));
+        messenger.showSnackBar(
+          SnackBar(content: Semantics(liveRegion: true, child: Text(message))),
+        );
       }
     } finally {
       _isFormOpen = false;
@@ -249,6 +253,7 @@ class _AppShellState extends State<AppShell> with WidgetsBindingObserver {
             label: l10n.addExpenseSemanticLabel,
             child: FloatingActionButton.extended(
               onPressed: _openAddExpense,
+              tooltip: l10n.addExpenseSemanticLabel,
               icon: const Icon(Icons.add),
               label: ExcludeSemantics(child: Text(l10n.addExpenseAction)),
             ),

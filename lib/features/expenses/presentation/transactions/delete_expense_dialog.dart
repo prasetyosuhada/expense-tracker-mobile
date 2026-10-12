@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import 'package:expensetracker/core/l10n/generated/app_localizations.dart';
 import 'package:expensetracker/core/theme/app_colors.dart';
@@ -61,42 +61,55 @@ class _DeleteExpenseDialogState extends State<DeleteExpenseDialog> {
       child: AlertDialog(
         title: Text(l10n.deleteDialogTitle),
         content: Text(l10n.deleteDialogMessage),
+        actionsOverflowButtonSpacing: AppSpacing.sm,
         actions: [
           TextButton(
             key: const Key('delete_dialog_cancel_button'),
+            style: TextButton.styleFrom(
+              minimumSize: const Size(64, AppSpacing.touchTarget),
+            ),
             autofocus: true,
             onPressed: isDeleting
                 ? null
                 : () => Navigator.of(context).pop(null),
-            child: Text(l10n.cancelAction),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(l10n.cancelAction),
+            ),
           ),
           FilledButton(
             key: const Key('delete_dialog_confirm_button'),
             style: FilledButton.styleFrom(
+              minimumSize: const Size(64, AppSpacing.touchTarget),
               backgroundColor: AppColors.danger,
               foregroundColor: AppColors.surface,
               disabledBackgroundColor: AppColors.danger.withValues(alpha: 0.6),
               disabledForegroundColor: AppColors.surface.withValues(alpha: 0.8),
             ),
             onPressed: isDeleting ? null : _handleDelete,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (isDeleting) ...[
-                  const SizedBox(
-                    width: AppSpacing.sm,
-                    height: AppSpacing.sm,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        AppColors.surface,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (isDeleting) ...[
+                    const ExcludeSemantics(
+                      child: SizedBox(
+                        width: AppSpacing.sm,
+                        height: AppSpacing.sm,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            AppColors.surface,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: AppSpacing.xs),
+                    const SizedBox(width: AppSpacing.xs),
+                  ],
+                  Text(l10n.deleteAction),
                 ],
-                Text(l10n.deleteAction),
-              ],
+              ),
             ),
           ),
         ],

@@ -270,8 +270,9 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
       final message = widget.viewModel.isEditing
           ? l10n.expenseUpdateFailed
           : l10n.expenseAddFailed;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Semantics(liveRegion: true, child: Text(message))),
+      );
     }
   }
 
@@ -310,14 +311,21 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
       builder: (dialogContext) => AlertDialog(
         title: Text(l10n.discardChangesTitle),
         content: Text(l10n.discardChangesMessage),
+        actionsOverflowButtonSpacing: AppSpacing.sm,
         actions: [
           TextButton(
             key: const Key('discard_dialog_stay_button'),
+            style: TextButton.styleFrom(
+              minimumSize: const Size(64, AppSpacing.touchTarget),
+            ),
             onPressed: () => Navigator.of(dialogContext).pop(false),
             child: Text(l10n.discardChangesStayAction),
           ),
           TextButton(
             key: const Key('discard_dialog_discard_button'),
+            style: TextButton.styleFrom(
+              minimumSize: const Size(64, AppSpacing.touchTarget),
+            ),
             onPressed: () => Navigator.of(dialogContext).pop(true),
             child: Text(l10n.discardChangesDiscardAction),
           ),
@@ -538,26 +546,35 @@ class _CategoryField extends StatelessWidget {
         ? ExpenseListItem.labelFor(l10n, selectedCategory!)
         : placeholder;
 
-    return InkWell(
-      key: const Key('expense_form_category_field'),
-      onTap: enabled ? onTap : null,
-      borderRadius: AppShapes.inputRadius,
-      child: InputDecorator(
-        isEmpty: !hasCategory,
-        decoration: InputDecoration(
-          labelText: label,
-          floatingLabelBehavior: FloatingLabelBehavior.always,
-          errorText: errorText,
-          enabled: enabled,
-          suffixIcon: const Icon(Icons.keyboard_arrow_down),
-        ),
-        child: Text(
-          text,
-          style: hasCategory
-              ? theme.textTheme.bodyLarge
-              : AppTypography.supportingBody.copyWith(
-                  color: AppColors.textMuted,
-                ),
+    return Semantics(
+      button: true,
+      enabled: enabled,
+      label: label,
+      value: text,
+      hint: errorText,
+      child: InkWell(
+        key: const Key('expense_form_category_field'),
+        onTap: enabled ? onTap : null,
+        borderRadius: AppShapes.inputRadius,
+        child: InputDecorator(
+          isEmpty: !hasCategory,
+          decoration: InputDecoration(
+            labelText: label,
+            floatingLabelBehavior: FloatingLabelBehavior.always,
+            errorText: errorText,
+            enabled: enabled,
+            suffixIcon: const ExcludeSemantics(
+              child: Icon(Icons.keyboard_arrow_down),
+            ),
+          ),
+          child: Text(
+            text,
+            style: hasCategory
+                ? theme.textTheme.bodyLarge
+                : AppTypography.supportingBody.copyWith(
+                    color: AppColors.textMuted,
+                  ),
+          ),
         ),
       ),
     );
@@ -586,20 +603,29 @@ class _DateField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return InkWell(
-      key: const Key('expense_form_date_field'),
-      onTap: enabled ? onTap : null,
-      borderRadius: AppShapes.inputRadius,
-      child: InputDecorator(
-        isEmpty: false,
-        decoration: InputDecoration(
-          labelText: label,
-          floatingLabelBehavior: FloatingLabelBehavior.always,
-          errorText: errorText,
-          enabled: enabled,
-          suffixIcon: const Icon(Icons.calendar_today_outlined),
+    return Semantics(
+      button: true,
+      enabled: enabled,
+      label: label,
+      value: formattedDate,
+      hint: errorText,
+      child: InkWell(
+        key: const Key('expense_form_date_field'),
+        onTap: enabled ? onTap : null,
+        borderRadius: AppShapes.inputRadius,
+        child: InputDecorator(
+          isEmpty: false,
+          decoration: InputDecoration(
+            labelText: label,
+            floatingLabelBehavior: FloatingLabelBehavior.always,
+            errorText: errorText,
+            enabled: enabled,
+            suffixIcon: const ExcludeSemantics(
+              child: Icon(Icons.calendar_today_outlined),
+            ),
+          ),
+          child: Text(formattedDate, style: theme.textTheme.bodyLarge),
         ),
-        child: Text(formattedDate, style: theme.textTheme.bodyLarge),
       ),
     );
   }
@@ -690,7 +716,7 @@ class CategoryPickerSheet extends StatelessWidget {
     final colors = theme.extension<CategoryColors>() ?? CategoryColors.light;
 
     return SafeArea(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.only(bottom: AppSpacing.sm),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -747,14 +773,16 @@ class _CategoryOptionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return ListTile(
-      leading: Container(
-        width: AppSpacing.categoryCircle,
-        height: AppSpacing.categoryCircle,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: backgroundColor,
+      leading: ExcludeSemantics(
+        child: Container(
+          width: AppSpacing.categoryCircle,
+          height: AppSpacing.categoryCircle,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: backgroundColor,
+          ),
+          child: Icon(icon, color: foregroundColor, size: AppSpacing.iconSize),
         ),
-        child: Icon(icon, color: foregroundColor, size: AppSpacing.iconSize),
       ),
       title: Text(
         label,
@@ -763,7 +791,9 @@ class _CategoryOptionTile extends StatelessWidget {
         ),
       ),
       trailing: isSelected
-          ? const Icon(Icons.check, color: AppColors.onPrimary)
+          ? const ExcludeSemantics(
+              child: Icon(Icons.check, color: AppColors.onPrimary),
+            )
           : null,
       selected: isSelected,
       onTap: onTap,
@@ -788,8 +818,10 @@ class _SubmitButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: AppSpacing.primaryButtonHeight,
+    return ConstrainedBox(
+      constraints: const BoxConstraints(
+        minHeight: AppSpacing.primaryButtonHeight,
+      ),
       child: FilledButton(
         key: const Key('expense_form_submit_button'),
         onPressed: onPressed,
@@ -824,7 +856,7 @@ class _SubmitButton extends StatelessWidget {
                   ),
                 ],
               )
-            : Text(text),
+            : FittedBox(fit: BoxFit.scaleDown, child: Text(text)),
       ),
     );
   }

@@ -113,7 +113,10 @@ class _HomeScreenState extends State<HomeScreen> {
       final l10n = AppLocalizations.of(context)!;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(l10n.homeRefreshFailure),
+          content: Semantics(
+            liveRegion: true,
+            child: Text(l10n.homeRefreshFailure),
+          ),
           action: SnackBarAction(label: l10n.retryAction, onPressed: _retry),
         ),
       );
