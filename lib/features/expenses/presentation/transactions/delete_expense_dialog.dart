@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import 'package:expensetracker/core/l10n/generated/app_localizations.dart';
 import 'package:expensetracker/core/theme/app_colors.dart';
@@ -47,6 +47,7 @@ class _DeleteExpenseDialogState extends State<DeleteExpenseDialog> {
     setState(() => _isDeleting = true);
     final success = await widget.viewModel.deleteExpense(widget.expense.id);
     if (!mounted) return;
+    setState(() => _isDeleting = false);
     Navigator.of(context).pop(success);
   }
 
