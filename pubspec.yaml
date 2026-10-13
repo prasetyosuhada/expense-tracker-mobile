@@ -26,6 +26,9 @@ dev_dependencies:
 flutter:
   generate: true
   uses-material-design: true
+  assets:
+    - assets/fonts/geist/OFL.txt
+    - assets/fonts/inter/OFL.txt
   fonts:
     - family: Geist
       fonts:
